@@ -45,12 +45,13 @@ Plans:
   1. After dev server is ready, an Electron window opens showing the user's live website at the localhost URL
   2. The site's HMR/live-reload continues working inside the Electron window (code changes reflect without manual refresh)
   3. A transparent overlay layer renders on top of the site content (ready for selection UI in Phase 3)
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- Overlay renderer, preload scripts, and electron-vite multi-entry config
+- [ ] 02-02-PLAN.md -- Electron main process with BaseWindow, dual WebContentsView, navigation, and IPC
+- [ ] 02-03-PLAN.md -- CLI integration (Electron build/spawn) and end-to-end verification
 
 ### Phase 3: Selection Overlay & Capture
 **Goal**: User can visually select any part of their website, see the selection highlighted, and type a change instruction
@@ -109,7 +110,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. CLI Foundation & Process Lifecycle | 0/3 | Not started | - |
-| 2. Electron Shell | 0/2 | Not started | - |
+| 2. Electron Shell | 0/3 | Not started | - |
 | 3. Selection Overlay & Capture | 0/3 | Not started | - |
 | 4. Claude Code Integration | 0/3 | Not started | - |
 | 5. Polish & Distribution | 0/2 | Not started | - |
