@@ -50,7 +50,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md -- Overlay renderer, preload scripts, and electron-vite multi-entry config
-- [ ] 02-02-PLAN.md -- Electron main process with BaseWindow, dual WebContentsView, navigation, and IPC
+- [x] 02-02-PLAN.md -- Electron main process with BaseWindow, dual WebContentsView, navigation, and IPC
 - [ ] 02-03-PLAN.md -- CLI integration (Electron build/spawn) and end-to-end verification
 
 ### Phase 3: Selection Overlay & Capture

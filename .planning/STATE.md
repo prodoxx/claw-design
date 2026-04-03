@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-04-03T17:09:12.966Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-04-03T17:11:03.314Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 02 (electron-shell) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-03
 
@@ -55,6 +55,7 @@ Progress: [..........] 0%
 | Phase 01 P02 | 5min | 2 tasks | 6 files |
 | Phase 01 P03 | 3min | 2 tasks | 2 files |
 | Phase 02-electron-shell P01 | 2min | 2 tasks | 7 files |
+| Phase 02 P02 | 3min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase 01]: Idempotent shutdown with ordered teardown: Claude > Electron > dev server, 5s force exit
 - [Phase 01]: Start command uses process.exit(1) for errors but not process.exit(0) at end -- event loop stays alive for long-running dev server and Claude session
 - [Phase 02-electron-shell]: Added out/ to .gitignore for electron-vite build output
+- [Phase 02]: Overlay bounds toggle pattern: shrink to 48x48 when inactive, expand to full window when active (only viable approach since setIgnoreMouseEvents not available on WebContentsView)
+- [Phase 02]: Environment variables (CLAW_URL, CLAW_PROJECT_NAME) for CLI-to-Electron handshake
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T17:09:12.964Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-04-03T17:11:03.312Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None

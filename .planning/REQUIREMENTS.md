@@ -18,7 +18,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Electron Window
 
-- [ ] **ELEC-01**: Electron window loads user's localhost URL with proper security isolation (sandbox, contextIsolation)
+- [x] **ELEC-01**: Electron window loads user's localhost URL with proper security isolation (sandbox, contextIsolation)
 - [x] **ELEC-02**: Electron window renders selection overlay on top of the user's site content
 - [ ] **ELEC-03**: User can switch between desktop, tablet, and mobile viewport sizes
 
@@ -122,7 +122,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLI-04 | Phase 1 | Complete |
 | CLI-05 | Phase 1 | Complete |
 | CLI-06 | Phase 2 | Pending |
-| ELEC-01 | Phase 2 | Pending |
+| ELEC-01 | Phase 2 | Complete |
 | ELEC-02 | Phase 2 | Complete |
 | ELEC-03 | Phase 5 | Pending |
 | SEL-01 | Phase 3 | Pending |
