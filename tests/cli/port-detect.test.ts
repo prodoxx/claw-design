@@ -92,32 +92,24 @@ describe('waitForPort', () => {
     }
   });
 
-  it(
-    'rejects with timeout error when port is not open',
-    async () => {
-      // Use a port that nothing should be listening on
-      await expect(
-        waitForPort(19876, { timeout: 200 })
-      ).rejects.toThrow('Timeout');
-    },
-    { timeout: 5000 }
-  );
+  it('rejects with timeout error when port is not open', { timeout: 5000 }, async () => {
+    // Use a port that nothing should be listening on
+    await expect(
+      waitForPort(19876, { timeout: 200 })
+    ).rejects.toThrow('Timeout');
+  });
 
-  it(
-    'resolves when port accepts TCP connection',
-    async () => {
-      // Start a server on a random port
-      server = createServer();
-      await new Promise<void>((resolve) => {
-        server!.listen(0, '127.0.0.1', () => resolve());
-      });
-      const port = (server.address() as { port: number }).port;
+  it('resolves when port accepts TCP connection', { timeout: 5000 }, async () => {
+    // Start a server on a random port
+    server = createServer();
+    await new Promise<void>((resolve) => {
+      server!.listen(0, '127.0.0.1', () => resolve());
+    });
+    const port = (server.address() as { port: number }).port;
 
-      // waitForPort should resolve successfully
-      await expect(waitForPort(port, { timeout: 2000 })).resolves.toBeUndefined();
-    },
-    { timeout: 5000 }
-  );
+    // waitForPort should resolve successfully
+    await expect(waitForPort(port, { timeout: 2000 })).resolves.toBeUndefined();
+  });
 });
 
 describe('getProcessOnPort', () => {
