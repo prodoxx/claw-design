@@ -1,4 +1,4 @@
-import { detectDevServerScript, spawnDevServer, DetectionError } from '../utils/dev-server.js';
+import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionError } from '../utils/dev-server.js';
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../utils/port-detect.js';
 import { isClaudeInstalled, spawnClaudeSession } from '../utils/claude.js';
 import { registerShutdownHandlers } from '../utils/process.js';
@@ -36,8 +36,10 @@ export async function startCommand(options: StartOptions): Promise<void> {
   } else {
     try {
       const detected = await detectDevServerScript(process.cwd());
-      command = `npm run ${detected.name}`;
-      detectSpinner.succeed(`Detected: ${pc.cyan(`npm run ${detected.name}`)} (from package.json)`);
+      const pm = await detectPackageManager(process.cwd());
+      const runCmd = pm === 'npm' ? `npm run ${detected.name}` : `${pm} run ${detected.name}`;
+      command = runCmd;
+      detectSpinner.succeed(`Detected: ${pc.cyan(runCmd)} (from package.json)`);
     } catch (err) {
       if (err instanceof DetectionError) {
         detectSpinner.fail('No dev server detected');

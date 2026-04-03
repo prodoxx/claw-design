@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { readFile } from 'node:fs/promises';
+import { readFile, access } from 'node:fs/promises';
 
 vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(),
+  access: vi.fn(),
 }));
 
 const mockedReadFile = vi.mocked(readFile);
+const mockedAccess = vi.mocked(access);
 
 // Import after mock setup
-const { detectDevServerScript, DetectionError, SCRIPT_PRIORITY } = await import(
+const { detectDevServerScript, detectPackageManager, DetectionError, SCRIPT_PRIORITY } = await import(
   '../../src/cli/utils/dev-server.js'
 );
 
@@ -99,5 +101,64 @@ describe('detectDevServerScript', () => {
 
   it('SCRIPT_PRIORITY is dev, start, serve', () => {
     expect(SCRIPT_PRIORITY).toEqual(['dev', 'start', 'serve']);
+  });
+});
+
+describe('detectPackageManager', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Default: all lockfiles missing
+    mockedAccess.mockRejectedValue(new Error('ENOENT'));
+  });
+
+  it('detects bun from bun.lock', async () => {
+    mockedAccess.mockImplementation(async (path) => {
+      if (String(path).endsWith('bun.lock')) return undefined;
+      throw new Error('ENOENT');
+    });
+    expect(await detectPackageManager('/project')).toBe('bun');
+  });
+
+  it('detects bun from bun.lockb', async () => {
+    mockedAccess.mockImplementation(async (path) => {
+      if (String(path).endsWith('bun.lockb')) return undefined;
+      throw new Error('ENOENT');
+    });
+    expect(await detectPackageManager('/project')).toBe('bun');
+  });
+
+  it('detects pnpm from pnpm-lock.yaml', async () => {
+    mockedAccess.mockImplementation(async (path) => {
+      if (String(path).endsWith('pnpm-lock.yaml')) return undefined;
+      throw new Error('ENOENT');
+    });
+    expect(await detectPackageManager('/project')).toBe('pnpm');
+  });
+
+  it('detects npm from package-lock.json', async () => {
+    mockedAccess.mockImplementation(async (path) => {
+      if (String(path).endsWith('package-lock.json')) return undefined;
+      throw new Error('ENOENT');
+    });
+    expect(await detectPackageManager('/project')).toBe('npm');
+  });
+
+  it('defaults to npm when no lockfile found', async () => {
+    expect(await detectPackageManager('/project')).toBe('npm');
+  });
+
+  it('bun takes priority over pnpm and npm', async () => {
+    // All lockfiles exist
+    mockedAccess.mockResolvedValue(undefined);
+    expect(await detectPackageManager('/project')).toBe('bun');
+  });
+
+  it('pnpm takes priority over npm', async () => {
+    mockedAccess.mockImplementation(async (path) => {
+      const p = String(path);
+      if (p.endsWith('pnpm-lock.yaml') || p.endsWith('package-lock.json')) return undefined;
+      throw new Error('ENOENT');
+    });
+    expect(await detectPackageManager('/project')).toBe('pnpm');
   });
 });

@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { spawn, type ChildProcess } from 'node:child_process';
 
@@ -38,6 +38,27 @@ export async function detectDevServerScript(
       `  Looked for: ${SCRIPT_PRIORITY.join(', ')}\n` +
       `  Tip: use --cmd "your-dev-command" to specify manually`
   );
+}
+
+export type PackageManager = 'npm' | 'pnpm' | 'bun';
+
+const LOCKFILE_MAP: Array<[string, PackageManager]> = [
+  ['bun.lock', 'bun'],
+  ['bun.lockb', 'bun'],
+  ['pnpm-lock.yaml', 'pnpm'],
+  ['package-lock.json', 'npm'],
+];
+
+export async function detectPackageManager(projectDir: string): Promise<PackageManager> {
+  for (const [lockfile, pm] of LOCKFILE_MAP) {
+    try {
+      await access(join(projectDir, lockfile));
+      return pm;
+    } catch {
+      // lockfile not found, try next
+    }
+  }
+  return 'npm';
 }
 
 export function spawnDevServer(

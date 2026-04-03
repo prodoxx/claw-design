@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events';
 // Mock all five utility modules
 vi.mock('../../src/cli/utils/dev-server.js', () => ({
   detectDevServerScript: vi.fn(),
+  detectPackageManager: vi.fn(),
   spawnDevServer: vi.fn(),
   DetectionError: class DetectionError extends Error {
     constructor(message: string) {
@@ -47,7 +48,7 @@ vi.mock('picocolors', () => ({
   },
 }));
 
-import { detectDevServerScript, spawnDevServer, DetectionError } from '../../src/cli/utils/dev-server.js';
+import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionError } from '../../src/cli/utils/dev-server.js';
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../../src/cli/utils/port-detect.js';
 import { isClaudeInstalled, spawnClaudeSession } from '../../src/cli/utils/claude.js';
 import { registerShutdownHandlers } from '../../src/cli/utils/process.js';
@@ -55,6 +56,7 @@ import { createSpinner, printReady, printError } from '../../src/cli/utils/outpu
 import { startCommand } from '../../src/cli/commands/start.js';
 
 const mockDetectDevServerScript = vi.mocked(detectDevServerScript);
+const mockDetectPackageManager = vi.mocked(detectPackageManager);
 const mockSpawnDevServer = vi.mocked(spawnDevServer);
 const mockExtractPortFromOutput = vi.mocked(extractPortFromOutput);
 const mockWaitForPort = vi.mocked(waitForPort);
@@ -108,6 +110,7 @@ describe('startCommand', () => {
 
     mockSpinner = makeMockSpinner();
     mockCreateSpinner.mockReturnValue(mockSpinner);
+    mockDetectPackageManager.mockResolvedValue('npm');
 
     mockDevServer = makeMockDevServer();
   });
@@ -229,6 +232,42 @@ describe('startCommand', () => {
       expect.stringContaining('not ready after 30s'),
       expect.stringContaining('--verbose')
     );
+  });
+
+  it('uses pnpm when pnpm lockfile detected', async () => {
+    mockIsClaudeInstalled.mockReturnValue(true);
+    mockDetectDevServerScript.mockResolvedValue({ name: 'dev', command: 'vite' });
+    mockDetectPackageManager.mockResolvedValue('pnpm');
+    mockSpawnDevServer.mockReturnValue(mockDevServer as any);
+    mockExtractPortFromOutput.mockReturnValue(3000);
+    mockWaitForPort.mockResolvedValue(undefined);
+    mockSpawnClaudeSession.mockResolvedValue({ sendMessage: vi.fn(), close: vi.fn() });
+
+    setTimeout(() => {
+      mockDevServer.stdout.emit('data', Buffer.from('http://localhost:3000'));
+    }, 10);
+
+    await startCommand({});
+
+    expect(mockSpawnDevServer).toHaveBeenCalledWith('pnpm run dev', false);
+  });
+
+  it('uses bun when bun lockfile detected', async () => {
+    mockIsClaudeInstalled.mockReturnValue(true);
+    mockDetectDevServerScript.mockResolvedValue({ name: 'dev', command: 'vite' });
+    mockDetectPackageManager.mockResolvedValue('bun');
+    mockSpawnDevServer.mockReturnValue(mockDevServer as any);
+    mockExtractPortFromOutput.mockReturnValue(3000);
+    mockWaitForPort.mockResolvedValue(undefined);
+    mockSpawnClaudeSession.mockResolvedValue({ sendMessage: vi.fn(), close: vi.fn() });
+
+    setTimeout(() => {
+      mockDevServer.stdout.emit('data', Buffer.from('http://localhost:3000'));
+    }, 10);
+
+    await startCommand({});
+
+    expect(mockSpawnDevServer).toHaveBeenCalledWith('bun run dev', false);
   });
 
   it('handles dev server crash without exiting', async () => {
