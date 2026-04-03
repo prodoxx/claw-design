@@ -17,9 +17,10 @@ Developers can visually select any part of their running website and describe ch
 - [x] Auto-detect package manager (npm/pnpm/bun) from lockfiles — Validated in Phase 1
 - [x] Spawn and manage the user's dev server as a child process — Validated in Phase 1
 - [x] Spawn and manage a Claude Code CLI session pointed at the codebase — Validated in Phase 1
+- [x] Electron app that loads the user's localhost URL — Validated in Phase 2
+- [x] Transparent overlay layer with toolbar (drag handle + selection button) — Validated in Phase 2
 
 ### Active
-- [ ] Electron app that loads the user's localhost URL
 - [ ] Freeform region selection overlay (draw a box around any area)
 - [ ] Capture screenshot of selected region
 - [ ] Capture DOM elements within selected region (structure, classes, IDs, text content)
@@ -57,7 +58,9 @@ Developers can visually select any part of their running website and describe ch
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Electron over Chrome extension | CLI-first flow means one command controls everything; no separate extension install needed | — Pending |
+| Electron over Chrome extension | CLI-first flow means one command controls everything; no separate extension install needed | Validated Phase 2 |
+| BaseWindow + dual WebContentsView | Site view (sandboxed) + transparent overlay view; bounds-toggle for mouse passthrough | Validated Phase 2 |
+| setBackgroundColor on View, not WebContents | Electron 36 API — method lives on View base class | Validated Phase 2 |
 | Freeform region selection over single-element click | Captures user intent about an area, more flexible than DOM-element-level selection | — Pending |
 | Screenshot + DOM for context | Gives Claude both visual and structural understanding of what the user is pointing at | — Pending |
 | Spawn Claude Code CLI (not API) | Leverages Claude Code's existing codebase navigation, tool use, and multi-file editing | — Pending |
@@ -82,4 +85,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after Phase 1 completion*
+*Last updated: 2026-04-04 after Phase 2 completion*
