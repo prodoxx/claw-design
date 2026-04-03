@@ -53,7 +53,7 @@ completed: 2026-04-03
 - **Duration:** 3 min
 - **Started:** 2026-04-03T14:33:23Z
 - **Completed:** 2026-04-03T14:36:54Z
-- **Tasks:** 2 of 3 (Task 3 is human-verify checkpoint)
+- **Tasks:** 3 of 3 (Task 3 human-verify: approved)
 - **Files modified:** 2
 
 ## Accomplishments
@@ -81,7 +81,9 @@ Each task was committed atomically:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### User-Requested Enhancement
+
+**Package manager auto-detection** — User requested during checkpoint that `clawdesign start` detect bun/pnpm/npm from lockfiles instead of hardcoding `npm run`. Added `detectPackageManager()` in dev-server.ts (checks bun.lock(b) > pnpm-lock.yaml > package-lock.json > npm fallback). Commit: `5fceffb`.
 
 ## Issues Encountered
 None -- all tasks executed cleanly.
@@ -95,7 +97,7 @@ None -- the start command is fully implemented with all utility modules wired. N
 ## Next Phase Readiness
 - Phase 01 CLI foundation is complete: `clawdesign start` orchestrates the full startup sequence
 - All utility modules (dev-server, port-detect, claude, process, output) are wired and tested
-- 47 tests passing across 5 test files
+- 56 tests passing across 5 test files
 - Ready for Phase 02 (Electron window) which will add `electronProcess` to ManagedProcesses
 
 ## Self-Check: PASSED
