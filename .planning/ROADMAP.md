@@ -30,12 +30,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. CLI detects when the dev server is ready (port is listening) before proceeding
   4. When user presses Ctrl+C, all child processes (dev server, Claude Code) terminate with no orphan/zombie processes
   5. CLI works with any web framework's dev server (React, Vue, Svelte, plain HTML, etc.) without framework-specific config
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md -- Project scaffolding, CLI entry point, and dev server detection
+- [ ] 01-02-PLAN.md -- Port detection, Claude Code session management, and shutdown coordination
+- [ ] 01-03-PLAN.md -- Start command orchestration, integration tests, and end-to-end verification
 
 ### Phase 2: Electron Shell
 **Goal**: User sees their running website in a secure Electron window with an overlay layer ready for interaction
