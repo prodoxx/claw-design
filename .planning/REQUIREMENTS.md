@@ -12,8 +12,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **CLI-01**: User can run `clawdesign start` in a project directory to launch the full workflow
 - [ ] **CLI-02**: CLI auto-detects dev server start command from package.json (dev > start > serve)
 - [ ] **CLI-03**: User can override dev server command with `--cmd` flag
-- [ ] **CLI-04**: CLI spawns dev server as child process and detects when it's ready (port listening)
-- [ ] **CLI-05**: CLI spawns Claude Code session pointed at the current codebase
+- [x] **CLI-04**: CLI spawns dev server as child process and detects when it's ready (port listening)
+- [x] **CLI-05**: CLI spawns Claude Code session pointed at the current codebase
 - [ ] **CLI-06**: CLI opens Electron window loading the dev server's localhost URL
 
 ### Electron Window
@@ -50,13 +50,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Process Lifecycle
 
-- [ ] **PROC-01**: All child processes (dev server, Claude Code, Electron) shut down gracefully on exit
-- [ ] **PROC-02**: Dev server process tree is fully killed (no zombie/orphan processes)
-- [ ] **PROC-03**: CLI handles SIGINT/SIGTERM for clean shutdown
+- [x] **PROC-01**: All child processes (dev server, Claude Code, Electron) shut down gracefully on exit
+- [x] **PROC-02**: Dev server process tree is fully killed (no zombie/orphan processes)
+- [x] **PROC-03**: CLI handles SIGINT/SIGTERM for clean shutdown
 
 ### Framework Agnosticism
 
-- [ ] **FRAME-01**: Tool works with any web framework that serves on localhost (React, Vue, Svelte, Angular, Rails, Django, Laravel, plain HTML, etc.)
+- [x] **FRAME-01**: Tool works with any web framework that serves on localhost (React, Vue, Svelte, Angular, Rails, Django, Laravel, plain HTML, etc.)
 - [ ] **FRAME-02**: No framework-specific plugins, middleware, or configuration required
 
 ## v2 Requirements
@@ -119,8 +119,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLI-01 | Phase 1 | Pending |
 | CLI-02 | Phase 1 | Pending |
 | CLI-03 | Phase 1 | Pending |
-| CLI-04 | Phase 1 | Pending |
-| CLI-05 | Phase 1 | Pending |
+| CLI-04 | Phase 1 | Complete |
+| CLI-05 | Phase 1 | Complete |
 | CLI-06 | Phase 2 | Pending |
 | ELEC-01 | Phase 2 | Pending |
 | ELEC-02 | Phase 2 | Pending |
@@ -139,10 +139,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLAUD-02 | Phase 4 | Pending |
 | CLAUD-03 | Phase 4 | Pending |
 | CLAUD-04 | Phase 4 | Pending |
-| PROC-01 | Phase 1 | Pending |
-| PROC-02 | Phase 1 | Pending |
-| PROC-03 | Phase 1 | Pending |
-| FRAME-01 | Phase 1 | Pending |
+| PROC-01 | Phase 1 | Complete |
+| PROC-02 | Phase 1 | Complete |
+| PROC-03 | Phase 1 | Complete |
+| FRAME-01 | Phase 1 | Complete |
 | FRAME-02 | Phase 1 | Pending |
 
 **Coverage:**
