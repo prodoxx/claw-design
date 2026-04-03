@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### CLI
 
-- [ ] **CLI-01**: User can run `clawdesign start` in a project directory to launch the full workflow
+- [x] **CLI-01**: User can run `clawdesign start` in a project directory to launch the full workflow
 - [ ] **CLI-02**: CLI auto-detects dev server start command from package.json (dev > start > serve)
 - [ ] **CLI-03**: User can override dev server command with `--cmd` flag
 - [x] **CLI-04**: CLI spawns dev server as child process and detects when it's ready (port listening)
@@ -57,7 +57,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Framework Agnosticism
 
 - [x] **FRAME-01**: Tool works with any web framework that serves on localhost (React, Vue, Svelte, Angular, Rails, Django, Laravel, plain HTML, etc.)
-- [ ] **FRAME-02**: No framework-specific plugins, middleware, or configuration required
+- [x] **FRAME-02**: No framework-specific plugins, middleware, or configuration required
 
 ## v2 Requirements
 
@@ -116,7 +116,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CLI-01 | Phase 1 | Pending |
+| CLI-01 | Phase 1 | Complete |
 | CLI-02 | Phase 1 | Pending |
 | CLI-03 | Phase 1 | Pending |
 | CLI-04 | Phase 1 | Complete |
@@ -143,7 +143,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROC-02 | Phase 1 | Complete |
 | PROC-03 | Phase 1 | Complete |
 | FRAME-01 | Phase 1 | Complete |
-| FRAME-02 | Phase 1 | Pending |
+| FRAME-02 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 28 total
