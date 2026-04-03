@@ -116,40 +116,40 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CLI-01 | — | Pending |
-| CLI-02 | — | Pending |
-| CLI-03 | — | Pending |
-| CLI-04 | — | Pending |
-| CLI-05 | — | Pending |
-| CLI-06 | — | Pending |
-| ELEC-01 | — | Pending |
-| ELEC-02 | — | Pending |
-| ELEC-03 | — | Pending |
-| SEL-01 | — | Pending |
-| SEL-02 | — | Pending |
-| SEL-03 | — | Pending |
-| SEL-04 | — | Pending |
-| CAP-01 | — | Pending |
-| CAP-02 | — | Pending |
-| CAP-03 | — | Pending |
-| INST-01 | — | Pending |
-| INST-02 | — | Pending |
-| INST-03 | — | Pending |
-| CLAUD-01 | — | Pending |
-| CLAUD-02 | — | Pending |
-| CLAUD-03 | — | Pending |
-| CLAUD-04 | — | Pending |
-| PROC-01 | — | Pending |
-| PROC-02 | — | Pending |
-| PROC-03 | — | Pending |
-| FRAME-01 | — | Pending |
-| FRAME-02 | — | Pending |
+| CLI-01 | Phase 1 | Pending |
+| CLI-02 | Phase 1 | Pending |
+| CLI-03 | Phase 1 | Pending |
+| CLI-04 | Phase 1 | Pending |
+| CLI-05 | Phase 1 | Pending |
+| CLI-06 | Phase 2 | Pending |
+| ELEC-01 | Phase 2 | Pending |
+| ELEC-02 | Phase 2 | Pending |
+| ELEC-03 | Phase 5 | Pending |
+| SEL-01 | Phase 3 | Pending |
+| SEL-02 | Phase 3 | Pending |
+| SEL-03 | Phase 3 | Pending |
+| SEL-04 | Phase 3 | Pending |
+| CAP-01 | Phase 3 | Pending |
+| CAP-02 | Phase 3 | Pending |
+| CAP-03 | Phase 3 | Pending |
+| INST-01 | Phase 3 | Pending |
+| INST-02 | Phase 3 | Pending |
+| INST-03 | Phase 3 | Pending |
+| CLAUD-01 | Phase 4 | Pending |
+| CLAUD-02 | Phase 4 | Pending |
+| CLAUD-03 | Phase 4 | Pending |
+| CLAUD-04 | Phase 4 | Pending |
+| PROC-01 | Phase 1 | Pending |
+| PROC-02 | Phase 1 | Pending |
+| PROC-03 | Phase 1 | Pending |
+| FRAME-01 | Phase 1 | Pending |
+| FRAME-02 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28
+- Mapped to phases: 28
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 after initial definition*
+*Last updated: 2026-04-03 after roadmap creation*
