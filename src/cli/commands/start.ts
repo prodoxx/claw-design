@@ -200,6 +200,7 @@ export async function startCommand(options: StartOptions): Promise<void> {
   const electronProcess = spawnElectron(`http://localhost:${port}`, projectName);
   electronSpinner.succeed(`Electron window opened ${pc.dim(`localhost:${port}`)}`);
 
+
   // Step 8: Register shutdown and print ready (per D-01 final step)
   registerShutdownHandlers({
     devServer: { pid: devServer.pid! },
@@ -213,10 +214,10 @@ export async function startCommand(options: StartOptions): Promise<void> {
     console.log(pc.dim('  Press Ctrl+C to stop, then re-run clawdesign start'));
   });
 
-  // Electron window closed -- exit cleanly
+  // Electron window closed -- trigger shutdown to kill dev server + Claude
   electronProcess.on('exit', () => {
     console.log(pc.dim('\n  Electron window closed.'));
-    process.exit(0);
+    process.emit('SIGINT');
   });
 
   printReady(port);

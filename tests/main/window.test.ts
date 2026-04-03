@@ -36,6 +36,7 @@ function createMockWebContentsView() {
   const instance = {
     webContents: createMockWebContents(),
     setBounds: vi.fn(),
+    setBackgroundColor: vi.fn(),
   };
   return instance;
 }
@@ -139,10 +140,10 @@ describe('createMainWindow', () => {
     expect(overlayCallArgs.webPreferences.preload).toMatch(/overlay\.mjs$/);
   });
 
-  it('calls setBackgroundColor with #00000000 on overlay webContents', () => {
+  it('calls setBackgroundColor with #00000000 on overlay view', () => {
     createMainWindow('http://localhost:3000', 'my-app', 3000);
     const overlayView = mockWebContentsViewInstances[1];
-    expect(overlayView.webContents.setBackgroundColor).toHaveBeenCalledWith('#00000000');
+    expect(overlayView.setBackgroundColor).toHaveBeenCalledWith('#00000000');
   });
 
   it('calls loadURL on site view with the provided URL', () => {
@@ -186,7 +187,7 @@ describe('setOverlayInactive', () => {
     mockWebContentsViewInstances.length = 0;
   });
 
-  it('sets overlay bounds to bottom-right 48x48 indicator area', () => {
+  it('sets overlay bounds to bottom-right toolbar area', () => {
     const mockOverlay = createMockWebContentsView();
     const mockWin = createMockBaseWindow();
     mockWin.getContentBounds.mockReturnValue({ x: 0, y: 0, width: 1280, height: 800 });
@@ -194,10 +195,10 @@ describe('setOverlayInactive', () => {
     setOverlayInactive(mockOverlay as unknown as Parameters<typeof setOverlayInactive>[0], mockWin as unknown as Parameters<typeof setOverlayInactive>[1]);
 
     expect(mockOverlay.setBounds).toHaveBeenCalledWith({
-      x: 1232, // 1280 - 48
-      y: 752,  // 800 - 48
-      width: 48,
-      height: 48,
+      x: 1212, // 1280 - 52 - 16
+      y: 688,  // 800 - 96 - 16
+      width: 68,  // 52 + 16 margin
+      height: 112, // 96 + 16 margin
     });
   });
 });

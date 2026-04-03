@@ -9,24 +9,55 @@ html, body {
   user-select: none;
 }
 
-/* Claw active indicator - bottom-right corner (D-14, D-15) */
-.claw-indicator {
-  position: fixed;
-  bottom: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(15, 15, 15, 0.7);
+/* Vertical pill toolbar — view is already positioned at bottom-right by main process */
+.claw-toolbar {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: rgba(10, 10, 10, 0.88);
+  border-radius: 999px;
+  z-index: 9999;
+  transition: opacity 0.15s ease;
+  opacity: 0.75;
+}
+
+.claw-toolbar:hover {
+  opacity: 1;
+}
+
+/* Drag handle - non-interactive visual indicator */
+.claw-toolbar-handle {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-  opacity: 0.6;
-  z-index: 9999;
+  width: 36px;
+  height: 36px;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: grab;
 }
 
-.claw-indicator:hover {
-  opacity: 1;
+/* Toolbar button */
+.claw-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.claw-toolbar-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
 }
