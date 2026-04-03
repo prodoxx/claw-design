@@ -33,21 +33,28 @@ export function registerShutdownHandlers(processes: ManagedProcesses): void {
       /* ignore */
     }
 
-    // Step 2: Kill Electron process tree
-    if (processes.electronProcess?.pid) {
-      kill(processes.electronProcess.pid, 'SIGTERM', () => {});
-    }
-
-    // Step 3: Kill dev server process tree (per PROC-02: tree-kill, not process.kill)
-    if (processes.devServer?.pid) {
-      kill(processes.devServer.pid, 'SIGTERM', () => {});
-    }
-
-    // Step 4: Force exit after 5s if still alive
+    // Force exit after 5s if kills hang
     setTimeout(() => process.exit(1), 5000).unref();
 
-    // Step 5: Normal exit
-    process.exit(0);
+    // Step 2: Kill process trees, wait for completion before exiting
+    let pending = 0;
+
+    function onKilled() {
+      pending--;
+      if (pending === 0) process.exit(0);
+    }
+
+    if (processes.electronProcess?.pid) {
+      pending++;
+      kill(processes.electronProcess.pid, 'SIGTERM', onKilled);
+    }
+
+    if (processes.devServer?.pid) {
+      pending++;
+      kill(processes.devServer.pid, 'SIGTERM', onKilled);
+    }
+
+    if (pending === 0) process.exit(0);
   }
 
   const sigintHandler = () => shutdown('SIGINT');

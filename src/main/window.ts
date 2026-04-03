@@ -54,7 +54,8 @@ export function createMainWindow(
   });
 
   // Pitfall 4: Must set transparent background BEFORE loading content
-  overlayView.webContents.setBackgroundColor('#00000000');
+  // setBackgroundColor is on WebContentsView (inherits from View), not on webContents
+  overlayView.setBackgroundColor('#00000000');
 
   win.contentView.addChildView(overlayView);
 
@@ -87,12 +88,15 @@ export function setOverlayInactive(
   win: BaseWindow,
 ): void {
   const { width, height } = win.getContentBounds();
-  const indicatorSize = 48;
+  // Toolbar pill dimensions + margin from window edge
+  const toolbarWidth = 52;
+  const toolbarHeight = 96;
+  const margin = 16;
   overlayView.setBounds({
-    x: width - indicatorSize,
-    y: height - indicatorSize,
-    width: indicatorSize,
-    height: indicatorSize,
+    x: width - toolbarWidth - margin,
+    y: height - toolbarHeight - margin,
+    width: toolbarWidth + margin,
+    height: toolbarHeight + margin,
   });
 }
 

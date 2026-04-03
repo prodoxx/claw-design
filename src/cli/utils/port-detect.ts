@@ -17,13 +17,27 @@ export const PORT_PATTERNS: readonly RegExp[] = [
 ] as const;
 
 /**
+ * Lines containing these phrases are error messages about ports, not actual
+ * listening announcements. Filter them out to avoid false positives like
+ * "Port 3016 is already in use" being detected as the dev server port.
+ */
+const PORT_ERROR_PHRASES = /(?:in use|EADDRINUSE|already|error|failed|unavailable)/i;
+
+/**
  * Extract a port number from dev server output text.
  * Tests patterns from most specific (URL) to least specific (colon:digits).
+ * Filters out error lines to avoid false positives from port-in-use messages.
  * Returns null if no valid port found.
  */
 export function extractPortFromOutput(output: string): number | null {
+  // Filter out lines that mention port errors before matching
+  const cleanedOutput = output
+    .split('\n')
+    .filter(line => !PORT_ERROR_PHRASES.test(line))
+    .join('\n');
+
   for (const pattern of PORT_PATTERNS) {
-    const match = output.match(pattern);
+    const match = cleanedOutput.match(pattern);
     if (match) {
       const port = parseInt(match[1], 10);
       if (port > 0 && port <= 65535) return port;
