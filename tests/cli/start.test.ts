@@ -25,6 +25,11 @@ vi.mock('../../src/cli/utils/claude.js', () => ({
   spawnClaudeSession: vi.fn(),
 }));
 
+vi.mock('../../src/cli/utils/electron.js', () => ({
+  buildElectron: vi.fn(),
+  spawnElectron: vi.fn(),
+}));
+
 vi.mock('../../src/cli/utils/process.js', () => ({
   registerShutdownHandlers: vi.fn(),
 }));
@@ -34,6 +39,10 @@ vi.mock('../../src/cli/utils/output.js', () => ({
   printReady: vi.fn(),
   printError: vi.fn(),
   printHeader: vi.fn(),
+}));
+
+vi.mock('node:fs', () => ({
+  readFileSync: vi.fn(() => JSON.stringify({ name: 'test-project' })),
 }));
 
 // Mock picocolors to pass through strings (no ANSI codes in tests)
@@ -51,6 +60,7 @@ vi.mock('picocolors', () => ({
 import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionError } from '../../src/cli/utils/dev-server.js';
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../../src/cli/utils/port-detect.js';
 import { isClaudeInstalled, spawnClaudeSession } from '../../src/cli/utils/claude.js';
+import { buildElectron, spawnElectron } from '../../src/cli/utils/electron.js';
 import { registerShutdownHandlers } from '../../src/cli/utils/process.js';
 import { createSpinner, printReady, printError } from '../../src/cli/utils/output.js';
 import { startCommand } from '../../src/cli/commands/start.js';
@@ -63,6 +73,8 @@ const mockWaitForPort = vi.mocked(waitForPort);
 const mockGetProcessOnPort = vi.mocked(getProcessOnPort);
 const mockIsClaudeInstalled = vi.mocked(isClaudeInstalled);
 const mockSpawnClaudeSession = vi.mocked(spawnClaudeSession);
+const mockBuildElectron = vi.mocked(buildElectron);
+const mockSpawnElectron = vi.mocked(spawnElectron);
 const mockRegisterShutdownHandlers = vi.mocked(registerShutdownHandlers);
 const mockCreateSpinner = vi.mocked(createSpinner);
 const mockPrintReady = vi.mocked(printReady);
@@ -95,6 +107,16 @@ function makeMockDevServer() {
   return proc;
 }
 
+// Create a mock Electron ChildProcess
+function makeMockElectronProcess() {
+  const proc = new EventEmitter() as EventEmitter & {
+    pid: number;
+    on: (event: string, listener: (...args: any[]) => void) => any;
+  };
+  proc.pid = 54321;
+  return proc;
+}
+
 // Track process.exit calls without actually exiting
 const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
   throw new Error('process.exit called');
@@ -103,6 +125,7 @@ const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
 describe('startCommand', () => {
   let mockSpinner: ReturnType<typeof makeMockSpinner>;
   let mockDevServer: ReturnType<typeof makeMockDevServer>;
+  let mockElectronProcess: ReturnType<typeof makeMockElectronProcess>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -113,6 +136,8 @@ describe('startCommand', () => {
     mockDetectPackageManager.mockResolvedValue('npm');
 
     mockDevServer = makeMockDevServer();
+    mockElectronProcess = makeMockElectronProcess();
+    mockSpawnElectron.mockReturnValue(mockElectronProcess as any);
   });
 
   afterEach(() => {
@@ -138,16 +163,19 @@ describe('startCommand', () => {
 
     await startCommand({});
 
-    // Assertions: all 7 steps executed
+    // Assertions: all 8 steps executed
     expect(mockIsClaudeInstalled).toHaveBeenCalled();
     expect(mockDetectDevServerScript).toHaveBeenCalledWith(process.cwd());
     expect(mockSpawnDevServer).toHaveBeenCalled();
     expect(mockWaitForPort).toHaveBeenCalledWith(3000, { timeout: 30_000 });
     expect(mockSpawnClaudeSession).toHaveBeenCalledWith(process.cwd());
+    expect(mockBuildElectron).toHaveBeenCalled();
+    expect(mockSpawnElectron).toHaveBeenCalledWith('http://localhost:3000', 'test-project');
     expect(mockRegisterShutdownHandlers).toHaveBeenCalledWith(
       expect.objectContaining({
         devServer: { pid: 12345 },
         claudeSession: expect.objectContaining({ sendMessage: expect.any(Function), close: expect.any(Function) }),
+        electronProcess: { pid: 54321 },
       })
     );
     expect(mockPrintReady).toHaveBeenCalledWith(3000);

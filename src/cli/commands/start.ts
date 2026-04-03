@@ -1,9 +1,12 @@
 import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionError } from '../utils/dev-server.js';
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../utils/port-detect.js';
 import { isClaudeInstalled, spawnClaudeSession } from '../utils/claude.js';
+import { buildElectron, spawnElectron } from '../utils/electron.js';
 import { registerShutdownHandlers } from '../utils/process.js';
 import { createSpinner, printReady, printError } from '../utils/output.js';
 import pc from 'picocolors';
+import path from 'node:path';
+import { readFileSync } from 'node:fs';
 import type { ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
 
@@ -53,6 +56,15 @@ export async function startCommand(options: StartOptions): Promise<void> {
       }
       process.exit(1);
     }
+  }
+
+  // Read project name from package.json for Electron window title (D-03)
+  let projectName = 'unknown';
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8'));
+    projectName = pkg.name || 'unknown';
+  } catch {
+    // Not critical -- window title will show 'unknown'
   }
 
   // Step 3: Spawn dev server (per CLI-04)
@@ -170,16 +182,41 @@ export async function startCommand(options: StartOptions): Promise<void> {
     process.exit(1);
   }
 
-  // Step 7: Register shutdown and print ready (per D-01 final step)
+  // Step 7: Build and launch Electron window (per CLI-06)
+  const electronSpinner = createSpinner('Building Electron app...');
+  try {
+    buildElectron();
+    electronSpinner.text = 'Opening Electron window...';
+  } catch (err) {
+    electronSpinner.fail('Electron build failed');
+    printError(
+      'Electron build failed',
+      err instanceof Error ? err.message : String(err),
+      'Try: npx electron-vite build --verbose'
+    );
+    process.exit(1);
+  }
+
+  const electronProcess = spawnElectron(`http://localhost:${port}`, projectName);
+  electronSpinner.succeed(`Electron window opened ${pc.dim(`localhost:${port}`)}`);
+
+  // Step 8: Register shutdown and print ready (per D-01 final step)
   registerShutdownHandlers({
     devServer: { pid: devServer.pid! },
     claudeSession: claude,
+    electronProcess: { pid: electronProcess.pid! },
   });
 
   // Dev server crash handling (per D-13): notify but do NOT exit
   devServer.on('exit', (code, signal) => {
     console.log(pc.yellow('\n  Dev server exited.'));
     console.log(pc.dim('  Press Ctrl+C to stop, then re-run clawdesign start'));
+  });
+
+  // Electron window closed -- exit cleanly
+  electronProcess.on('exit', () => {
+    console.log(pc.dim('\n  Electron window closed.'));
+    process.exit(0);
   });
 
   printReady(port);
