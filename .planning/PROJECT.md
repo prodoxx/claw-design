@@ -12,14 +12,13 @@ Developers can visually select any part of their running website and describe ch
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] CLI entry point (`clawdesign start`) that orchestrates the full workflow — Validated in Phase 1
+- [x] Auto-detect dev server start command from package.json with manual override (`--cmd`) — Validated in Phase 1
+- [x] Auto-detect package manager (npm/pnpm/bun) from lockfiles — Validated in Phase 1
+- [x] Spawn and manage the user's dev server as a child process — Validated in Phase 1
+- [x] Spawn and manage a Claude Code CLI session pointed at the codebase — Validated in Phase 1
 
 ### Active
-
-- [ ] CLI entry point (`claw start`) that orchestrates the full workflow
-- [ ] Auto-detect dev server start command from package.json with manual override (`--cmd`)
-- [ ] Spawn and manage the user's dev server as a child process
-- [ ] Spawn and manage a Claude Code CLI session pointed at the codebase
 - [ ] Electron app that loads the user's localhost URL
 - [ ] Freeform region selection overlay (draw a box around any area)
 - [ ] Capture screenshot of selected region
@@ -83,4 +82,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 after initialization*
+*Last updated: 2026-04-03 after Phase 1 completion*
