@@ -1,4 +1,5 @@
 import { defineConfig } from 'electron-vite';
+import { resolve } from 'node:path';
 
 export default defineConfig({
   main: {
@@ -11,11 +12,21 @@ export default defineConfig({
   preload: {
     build: {
       rollupOptions: {
-        input: 'src/preload/index.ts',
+        input: {
+          index: resolve(__dirname, 'src/preload/index.ts'),
+          overlay: resolve(__dirname, 'src/preload/overlay.ts'),
+        },
       },
     },
   },
   renderer: {
     root: 'src/renderer',
+    build: {
+      rollupOptions: {
+        input: {
+          overlay: resolve(__dirname, 'src/renderer/overlay.html'),
+        },
+      },
+    },
   },
 });
