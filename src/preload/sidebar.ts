@@ -36,6 +36,14 @@ const sidebarAPI = {
   /** Get logs for a specific task */
   getTaskLogs: (id: string): Promise<Array<{ timestamp: number; type: string; content: string }>> =>
     ipcRenderer.invoke('sidebar:task-logs', { id }),
+
+  /** Apply a drag delta to the sidebar position (returns new position) */
+  dragDelta: (dx: number, dy: number): Promise<{ x: number; y: number }> =>
+    ipcRenderer.invoke('sidebar:drag-delta', { dx, dy }),
+
+  /** Set absolute sidebar position (used to restore saved position) */
+  setPosition: (x: number, y: number): Promise<void> =>
+    ipcRenderer.invoke('sidebar:set-position', { x, y }),
 };
 
 contextBridge.exposeInMainWorld('clawSidebar', sidebarAPI);

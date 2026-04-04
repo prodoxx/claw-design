@@ -43,7 +43,22 @@ body {
 
 .sidebar-expand-btn:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(10, 10, 10, 0.95);
+}
+
+/* Drag handle (shared between minimized and expanded headers) */
+.sidebar-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.25);
+  cursor: grab;
+}
+
+.sidebar-drag-handle:active {
+  cursor: grabbing;
 }
 
 /* Badge counter below the expand icon */

@@ -9,6 +9,12 @@ export interface WindowComponents {
   setOverlayIsActive: (active: boolean) => void;
   setSidebarState: (state: 'hidden' | 'minimized' | 'expanded') => void;
   getSidebarState: () => 'hidden' | 'minimized' | 'expanded';
+  /** Store user-chosen toolbar position (persists across overlay active/inactive toggle) */
+  setToolbarPosition: (x: number, y: number) => void;
+  getToolbarPosition: () => { x: number; y: number } | null;
+  /** Store user-chosen sidebar position (persists across state changes) */
+  setSidebarUserPosition: (x: number, y: number) => void;
+  getSidebarUserPosition: () => { x: number; y: number } | null;
 }
 
 /**
@@ -92,6 +98,10 @@ export function createMainWindow(
   // Track sidebar state for bounds management
   let sidebarState: 'hidden' | 'minimized' | 'expanded' = 'hidden';
 
+  // User-set positions (via dragging) -- null means use default layout
+  let toolbarPosition: { x: number; y: number } | null = null;
+  let sidebarUserPosition: { x: number; y: number } | null = null;
+
   function applySidebarBounds(): void {
     const { width, height } = win.getContentBounds();
     const SIDEBAR_WIDTH = 300;
@@ -102,23 +112,38 @@ export function createMainWindow(
       case 'hidden':
         sidebarView.setBounds({ x: 0, y: 0, width: 0, height: 0 });
         break;
-      case 'minimized':
-        sidebarView.setBounds({
-          x: width - 52,
-          y: Math.round(height / 2) - 18,
-          width: 52,
-          height: 80,
-        });
+      case 'minimized': {
+        const mW = 52;
+        const mH = 80;
+        if (sidebarUserPosition) {
+          const x = Math.max(0, Math.min(width - mW, sidebarUserPosition.x));
+          const y = Math.max(0, Math.min(height - mH, sidebarUserPosition.y));
+          sidebarView.setBounds({ x, y, width: mW, height: mH });
+        } else {
+          sidebarView.setBounds({
+            x: width - mW,
+            y: Math.round(height / 2) - 18,
+            width: mW,
+            height: mH,
+          });
+        }
         break;
+      }
       case 'expanded': {
         // Floating overlay: doesn't shrink site or overlay views
         const panelHeight = Math.min(SIDEBAR_MAX_HEIGHT, height - MARGIN * 2);
-        sidebarView.setBounds({
-          x: width - SIDEBAR_WIDTH - MARGIN,
-          y: MARGIN,
-          width: SIDEBAR_WIDTH,
-          height: panelHeight,
-        });
+        if (sidebarUserPosition) {
+          const x = Math.max(0, Math.min(width - SIDEBAR_WIDTH, sidebarUserPosition.x));
+          const y = Math.max(0, Math.min(height - panelHeight, sidebarUserPosition.y));
+          sidebarView.setBounds({ x, y, width: SIDEBAR_WIDTH, height: panelHeight });
+        } else {
+          sidebarView.setBounds({
+            x: width - SIDEBAR_WIDTH - MARGIN,
+            y: MARGIN,
+            width: SIDEBAR_WIDTH,
+            height: panelHeight,
+          });
+        }
         break;
       }
     }
@@ -155,6 +180,10 @@ export function createMainWindow(
     setOverlayIsActive: (active: boolean) => { overlayIsActive = active; },
     setSidebarState,
     getSidebarState: () => sidebarState,
+    setToolbarPosition: (x: number, y: number) => { toolbarPosition = { x, y }; },
+    getToolbarPosition: () => toolbarPosition,
+    setSidebarUserPosition: (x: number, y: number) => { sidebarUserPosition = { x, y }; },
+    getSidebarUserPosition: () => sidebarUserPosition,
   };
 }
 
@@ -170,16 +199,26 @@ export function setOverlayInactive(
 ): void {
   const { width, height } = win.getContentBounds();
   // Toolbar pill dimensions + margin from window edge
-  // 3 items × 36px + 2 gaps × 4px + padding 20px = 136px
+  // 3 items * 36px + 2 gaps * 4px + padding 20px = 136px
   const toolbarWidth = 52;
   const toolbarHeight = 136;
   const margin = 16;
-  overlayView.setBounds({
-    x: width - toolbarWidth - margin,
-    y: height - toolbarHeight - margin,
-    width: toolbarWidth + margin,
-    height: toolbarHeight + margin,
-  });
+  const viewW = toolbarWidth + margin;
+  const viewH = toolbarHeight + margin;
+
+  const userPos = components?.getToolbarPosition?.();
+  if (userPos) {
+    const x = Math.max(0, Math.min(width - viewW, userPos.x));
+    const y = Math.max(0, Math.min(height - viewH, userPos.y));
+    overlayView.setBounds({ x, y, width: viewW, height: viewH });
+  } else {
+    overlayView.setBounds({
+      x: width - toolbarWidth - margin,
+      y: height - toolbarHeight - margin,
+      width: viewW,
+      height: viewH,
+    });
+  }
   components?.setOverlayIsActive(false);
 }
 

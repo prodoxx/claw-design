@@ -31,6 +31,8 @@ declare global {
       retryTask: (id: string) => Promise<void>;
       getTaskLogs: (id: string) => Promise<TaskLogEntry[]>;
       onStateChange: (cb: (state: 'hidden' | 'minimized' | 'expanded') => void) => void;
+      dragDelta: (dx: number, dy: number) => Promise<{ x: number; y: number }>;
+      setPosition: (x: number, y: number) => Promise<void>;
     };
   }
 }
@@ -423,6 +425,45 @@ export function updateSidebarState(visual: SidebarVisualState): void {
 }
 
 // ============================================================
+// Drag handling: move sidebar view via IPC
+// ============================================================
+
+function setupDrag(handleEl: HTMLElement): void {
+  let isDragging = false;
+  let lastScreenX = 0;
+  let lastScreenY = 0;
+
+  handleEl.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    lastScreenX = e.screenX;
+    lastScreenY = e.screenY;
+    handleEl.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.screenX - lastScreenX;
+    const dy = e.screenY - lastScreenY;
+    lastScreenX = e.screenX;
+    lastScreenY = e.screenY;
+    if (dx !== 0 || dy !== 0) {
+      window.clawSidebar.dragDelta(dx, dy);
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDragging) return;
+    isDragging = false;
+    handleEl.style.cursor = '';
+    // Save final position to localStorage for restore on next launch
+    window.clawSidebar.dragDelta(0, 0).then((pos) => {
+      localStorage.setItem('claw-sidebar-pos', JSON.stringify(pos));
+    });
+  });
+}
+
+// ============================================================
 // Event wiring (on DOMContentLoaded)
 // ============================================================
 
@@ -497,4 +538,24 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSidebarState(newState as SidebarVisualState);
     updateBadge();
   });
+
+  // 6. Wire drag handles for sidebar repositioning
+  const dragHandle = document.getElementById('sidebar-drag-handle');
+  if (dragHandle) setupDrag(dragHandle);
+
+  const expandedDragHandle = document.getElementById('sidebar-expanded-drag-handle');
+  if (expandedDragHandle) setupDrag(expandedDragHandle);
+
+  // 7. Restore saved position from localStorage
+  const savedPos = localStorage.getItem('claw-sidebar-pos');
+  if (savedPos) {
+    try {
+      const { x, y } = JSON.parse(savedPos);
+      if (typeof x === 'number' && typeof y === 'number') {
+        window.clawSidebar.setPosition(x, y);
+      }
+    } catch {
+      // Corrupted data -- ignore
+    }
+  }
 });

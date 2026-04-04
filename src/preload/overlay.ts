@@ -74,6 +74,14 @@ const overlayAPI = {
   onPrefillInstruction: (callback: (data: { instruction: string }) => void): void => {
     ipcRenderer.on('overlay:prefill-instruction', (_event, data) => callback(data));
   },
+
+  /** Apply a drag delta to the toolbar position (returns new position) */
+  dragToolbar: (dx: number, dy: number): Promise<{ x: number; y: number }> =>
+    ipcRenderer.invoke('overlay:drag-toolbar', { dx, dy }),
+
+  /** Set absolute toolbar position (used to restore saved position) */
+  setToolbarPosition: (x: number, y: number): Promise<void> =>
+    ipcRenderer.invoke('overlay:set-toolbar-position', { x, y }),
 };
 
 contextBridge.exposeInMainWorld('claw', overlayAPI);

@@ -144,4 +144,50 @@ export function registerIpcHandlers(
   ipcMain.handle('sidebar:task-retry', async (_event, data: { id: string }) => {
     await agentManager.retryTask(data.id);
   });
+
+  // --- Sidebar drag IPC handlers ---
+
+  // Apply drag delta to sidebar view position (returns clamped new position)
+  ipcMain.handle('sidebar:drag-delta', async (_event, data: { dx: number; dy: number }) => {
+    const current = components.sidebarView.getBounds();
+    const { width: winW, height: winH } = components.window.getContentBounds();
+    const newX = Math.max(0, Math.min(winW - current.width, current.x + data.dx));
+    const newY = Math.max(0, Math.min(winH - current.height, current.y + data.dy));
+    components.sidebarView.setBounds({ ...current, x: newX, y: newY });
+    components.setSidebarUserPosition(newX, newY);
+    return { x: newX, y: newY };
+  });
+
+  // Set absolute sidebar position (used to restore saved position on startup)
+  ipcMain.handle('sidebar:set-position', async (_event, data: { x: number; y: number }) => {
+    const current = components.sidebarView.getBounds();
+    const { width: winW, height: winH } = components.window.getContentBounds();
+    const x = Math.max(0, Math.min(winW - current.width, data.x));
+    const y = Math.max(0, Math.min(winH - current.height, data.y));
+    components.sidebarView.setBounds({ ...current, x, y });
+    components.setSidebarUserPosition(x, y);
+  });
+
+  // --- Toolbar drag IPC handlers ---
+
+  // Apply drag delta to overlay (toolbar) view position (returns clamped new position)
+  ipcMain.handle('overlay:drag-toolbar', async (_event, data: { dx: number; dy: number }) => {
+    const current = components.overlayView.getBounds();
+    const { width: winW, height: winH } = components.window.getContentBounds();
+    const newX = Math.max(0, Math.min(winW - current.width, current.x + data.dx));
+    const newY = Math.max(0, Math.min(winH - current.height, current.y + data.dy));
+    components.overlayView.setBounds({ ...current, x: newX, y: newY });
+    components.setToolbarPosition(newX, newY);
+    return { x: newX, y: newY };
+  });
+
+  // Set absolute toolbar position (used to restore saved position on startup)
+  ipcMain.handle('overlay:set-toolbar-position', async (_event, data: { x: number; y: number }) => {
+    const current = components.overlayView.getBounds();
+    const { width: winW, height: winH } = components.window.getContentBounds();
+    const x = Math.max(0, Math.min(winW - current.width, data.x));
+    const y = Math.max(0, Math.min(winH - current.height, data.y));
+    components.overlayView.setBounds({ ...current, x, y });
+    components.setToolbarPosition(x, y);
+  });
 }

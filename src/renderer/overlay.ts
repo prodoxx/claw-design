@@ -583,4 +583,57 @@ if (isInBrowser()) {
       }
     });
   }
+
+  // ============================================================
+  // Toolbar drag handling: move overlay view via IPC
+  // ============================================================
+
+  const toolbarHandle = document.querySelector('.claw-toolbar-handle') as HTMLElement | null;
+  if (toolbarHandle) {
+    let isDragging = false;
+    let lastScreenX = 0;
+    let lastScreenY = 0;
+
+    toolbarHandle.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      lastScreenX = e.screenX;
+      lastScreenY = e.screenY;
+      toolbarHandle.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.screenX - lastScreenX;
+      const dy = e.screenY - lastScreenY;
+      lastScreenX = e.screenX;
+      lastScreenY = e.screenY;
+      if (dx !== 0 || dy !== 0) {
+        window.claw.dragToolbar(dx, dy);
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      toolbarHandle.style.cursor = '';
+      // Save final position to localStorage for restore on next launch
+      window.claw.dragToolbar(0, 0).then((pos: { x: number; y: number }) => {
+        localStorage.setItem('claw-toolbar-pos', JSON.stringify(pos));
+      });
+    });
+
+    // Restore saved toolbar position from localStorage
+    const savedToolbarPos = localStorage.getItem('claw-toolbar-pos');
+    if (savedToolbarPos) {
+      try {
+        const { x, y } = JSON.parse(savedToolbarPos);
+        if (typeof x === 'number' && typeof y === 'number') {
+          window.claw.setToolbarPosition(x, y);
+        }
+      } catch {
+        // Corrupted data -- ignore
+      }
+    }
+  }
 }
