@@ -4,6 +4,11 @@ import {
   setOverlayInactive,
   type WindowComponents,
 } from './window.js';
+import { captureRegion, type CSSRect } from './capture.js';
+import {
+  buildDomExtractionScript,
+  type DomExtractionResult,
+} from './dom-extract.js';
 
 /**
  * Register IPC handlers for overlay communication.
@@ -45,6 +50,26 @@ export function registerIpcHandlers(components: WindowComponents): void {
           };
         })()
       `);
+      return result;
+    },
+  );
+
+  // Capture screenshot of selected region (CAP-01, CAP-03)
+  ipcMain.handle(
+    'overlay:capture-screenshot',
+    async (_event, cssRect: CSSRect): Promise<Buffer> => {
+      return captureRegion(components.siteView, cssRect);
+    },
+  );
+
+  // Extract DOM elements within selected region (CAP-02)
+  ipcMain.handle(
+    'overlay:extract-dom',
+    async (_event, cssRect: CSSRect): Promise<DomExtractionResult> => {
+      const script = buildDomExtractionScript(cssRect);
+      const result = await components.siteView.webContents.executeJavaScript(
+        script,
+      );
       return result;
     },
   );
