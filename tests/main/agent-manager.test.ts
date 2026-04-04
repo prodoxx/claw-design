@@ -121,7 +121,7 @@ describe('AgentManager', () => {
   let manager: AgentManager;
   let updates: TaskUpdate[];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     mockQueryMessages = [];
     mockQueryCloseCallCount = 0;
     mockQueryDeferred = [];
@@ -130,7 +130,34 @@ describe('AgentManager', () => {
     manager.setOnTaskUpdate((update) => {
       updates.push(update);
     });
-    vi.clearAllMocks();
+    // Restore the default mock implementation (vi.clearAllMocks removes it)
+    const sdk = await import('@anthropic-ai/claude-agent-sdk');
+    (sdk.query as ReturnType<typeof vi.fn>).mockImplementation((_params: unknown) => {
+      const messages = [...mockQueryMessages];
+      return {
+        async *[Symbol.asyncIterator]() {
+          for (const msg of messages) {
+            yield msg;
+          }
+        },
+        close: vi.fn(() => { mockQueryCloseCallCount++; }),
+        interrupt: vi.fn(),
+        setPermissionMode: vi.fn(),
+        setModel: vi.fn(),
+        setMaxThinkingTokens: vi.fn(),
+        applyFlagSettings: vi.fn(),
+        initializationResult: vi.fn(),
+        supportedCommands: vi.fn(),
+        supportedModels: vi.fn(),
+        supportedAgents: vi.fn(),
+        stopTask: vi.fn(),
+        setMcpServers: vi.fn(),
+        streamInput: vi.fn(),
+        next: vi.fn(),
+        return: vi.fn(),
+        throw: vi.fn(),
+      };
+    });
   });
 
   it('submitTask creates a task with queued status and returns a task ID', async () => {
