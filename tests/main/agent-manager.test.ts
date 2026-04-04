@@ -55,31 +55,6 @@ function createDeferredQuery(messages: Array<Record<string, unknown>>) {
   };
 }
 
-// ---- Mock child_process.spawn (for claude login auto-auth) ----
-let mockSpawnExitCode = 1; // default: login fails in tests
-vi.mock('node:child_process', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:child_process')>();
-  return {
-    ...actual,
-    spawn: vi.fn((_cmd: string, _args: string[]) => {
-      const listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
-      const child = {
-        on(event: string, cb: (...args: unknown[]) => void) {
-          (listeners[event] ??= []).push(cb);
-          if (event === 'close') {
-            // Fire close async with the configured exit code
-            setTimeout(() => cb(mockSpawnExitCode), 10);
-          }
-          return child;
-        },
-        kill: vi.fn(),
-        pid: 12345,
-      };
-      return child;
-    }),
-  };
-});
-
 vi.mock('@anthropic-ai/claude-agent-sdk', () => ({
   query: vi.fn((_params: unknown) => {
     // If there are deferred queries waiting, use the first one
@@ -440,9 +415,7 @@ describe('AgentManager', () => {
     expect(errorUpdate!.error).toContain('claude login');
   });
 
-  it('detects auth errors on SDKAssistantMessage.error, attempts auto-login, then errors', async () => {
-    // Auto-login will fail (mockSpawnExitCode = 1 by default), so task should end as error
-    mockSpawnExitCode = 1;
+  it('detects auth errors on SDKAssistantMessage.error and overrides success result', async () => {
     mockQueryMessages = [
       { type: 'system', subtype: 'init', tools: [], mcp_servers: [], model: 'claude-4' },
       {
@@ -456,9 +429,9 @@ describe('AgentManager', () => {
     const id = await manager.submitTask(makeInput());
     await vi.waitFor(() => {
       const final = updates.filter((u) => u.id === id);
-      const hasResult = final.some((u) => u.status === 'error');
+      const hasResult = final.some((u) => u.status === 'error' || u.status === 'done');
       expect(hasResult).toBe(true);
-    }, { timeout: 2000 });
+    });
 
     // Should be error, NOT done
     const statuses = updates.filter((u) => u.id === id).map((u) => u.status);
@@ -469,9 +442,7 @@ describe('AgentManager', () => {
     expect(errorUpdate!.error).toContain('claude login');
   });
 
-  it('detects auth errors on SDKAuthStatusMessage, attempts auto-login, then errors', async () => {
-    // Auto-login will fail (mockSpawnExitCode = 1 by default), so task should end as error
-    mockSpawnExitCode = 1;
+  it('detects auth errors on SDKAuthStatusMessage and overrides success result', async () => {
     mockQueryMessages = [
       { type: 'system', subtype: 'init', tools: [], mcp_servers: [], model: 'claude-4' },
       {
@@ -486,9 +457,9 @@ describe('AgentManager', () => {
     const id = await manager.submitTask(makeInput());
     await vi.waitFor(() => {
       const final = updates.filter((u) => u.id === id);
-      const hasResult = final.some((u) => u.status === 'error');
+      const hasResult = final.some((u) => u.status === 'error' || u.status === 'done');
       expect(hasResult).toBe(true);
-    }, { timeout: 2000 });
+    });
 
     // Should be error, NOT done
     const statuses = updates.filter((u) => u.id === id).map((u) => u.status);

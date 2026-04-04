@@ -1,6 +1,6 @@
 import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionError } from '../utils/dev-server.js';
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../utils/port-detect.js';
-import { isClaudeInstalled } from '../utils/claude.js';
+import { isClaudeInstalled, getClaudeAuthStatus } from '../utils/claude.js';
 import { buildElectron, spawnElectron } from '../utils/electron.js';
 import { registerShutdownHandlers } from '../utils/process.js';
 import { createSpinner, printReady, printError } from '../utils/output.js';
@@ -25,6 +25,17 @@ export async function startCommand(options: StartOptions): Promise<void> {
       'Claude Code not found',
       'Claude Code CLI is not installed or not in PATH.',
       'Install: https://claude.ai/download'
+    );
+    process.exit(1);
+  }
+
+  // Step 1b: Check Claude Code authentication
+  const authStatus = getClaudeAuthStatus();
+  if (!authStatus.loggedIn) {
+    printError(
+      'Claude Code not authenticated',
+      'You need to sign in before using clawdesign.',
+      'Run: claude login'
     );
     process.exit(1);
   }

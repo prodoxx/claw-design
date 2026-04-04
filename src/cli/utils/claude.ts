@@ -13,7 +13,37 @@ export function isClaudeInstalled(): boolean {
   }
 }
 
-// Note: The Claude Code session management (spawnClaudeSession, ClaudeSession)
-// has been removed. Claude agent lifecycle is now handled by AgentManager in
-// the Electron main process (src/main/agent-manager.ts), which spawns per-task
-// agents instead of maintaining a single eager session.
+export interface ClaudeAuthStatus {
+  loggedIn: boolean;
+  authMethod?: string;
+  apiProvider?: string;
+  apiKeySource?: string;
+  email?: string | null;
+}
+
+/**
+ * Check if the user is authenticated with Claude Code.
+ *
+ * Runs `claude auth status --json` and parses the result.
+ * Returns the parsed status, or `{ loggedIn: false }` if the command
+ * fails or produces unparseable output.
+ */
+export function getClaudeAuthStatus(): ClaudeAuthStatus {
+  try {
+    const raw = execFileSync('claude', ['auth', 'status', '--json'], {
+      encoding: 'utf-8',
+      timeout: 10_000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    const parsed = JSON.parse(raw.trim());
+    return {
+      loggedIn: Boolean(parsed.loggedIn),
+      authMethod: parsed.authMethod,
+      apiProvider: parsed.apiProvider,
+      apiKeySource: parsed.apiKeySource,
+      email: parsed.email,
+    };
+  } catch {
+    return { loggedIn: false };
+  }
+}
