@@ -9,16 +9,25 @@ import {
   buildDomExtractionScript,
   type DomExtractionResult,
 } from './dom-extract.js';
+import { type AgentManager } from './agent-manager.js';
 
 /**
- * Register IPC handlers for overlay communication.
+ * Register IPC handlers for overlay and sidebar communication.
  *
  * Phase 2 establishes the activation/deactivation scaffold.
  * Phase 3 adds selection capture and DOM extraction handlers.
+ * Phase 4 wires submit to AgentManager and adds sidebar IPC channels.
  */
-export function registerIpcHandlers(components: WindowComponents): void {
+export function registerIpcHandlers(
+  components: WindowComponents,
+  agentManager: AgentManager,
+): void {
   // Activate selection mode: expand overlay to full window, notify renderer
+  // D-08: auto-minimize sidebar when entering selection mode
   ipcMain.handle('overlay:activate-selection', async () => {
+    if (components.getSidebarState() === 'expanded') {
+      components.setSidebarState('minimized');
+    }
     setOverlayActive(components.overlayView, components.window, components);
     components.overlayView.webContents.send(
       'overlay:mode-change',
@@ -74,8 +83,8 @@ export function registerIpcHandlers(components: WindowComponents): void {
     },
   );
 
-  // Submit instruction with screenshot + DOM context (INST-02)
-  // Phase 3 stores it; Phase 4 sends to Claude Code
+  // Submit instruction with screenshot + DOM context (CLAUD-01, CLAUD-02)
+  // Routes to AgentManager which spawns a Claude agent for this task.
   ipcMain.handle(
     'overlay:submit-instruction',
     async (
@@ -87,17 +96,60 @@ export function registerIpcHandlers(components: WindowComponents): void {
         bounds: CSSRect;
       },
     ) => {
-      // Phase 4 will implement the Claude Code integration here.
-      // For now, log the submission so we can verify the pipeline works end-to-end.
-      console.log('[claw] Instruction submitted:', {
+      // Pitfall 1: Buffer may arrive as Uint8Array via IPC structured cloning
+      const screenshotBuffer = Buffer.from(data.screenshot);
+
+      const taskId = await agentManager.submitTask({
         instruction: data.instruction,
-        screenshotSize: data.screenshot?.length ?? 0,
-        domElements: data.dom?.elements?.length ?? 0,
+        screenshot: screenshotBuffer,
+        dom: data.dom,
         bounds: data.bounds,
       });
-      // Shrink overlay back to inactive
+
+      // Shrink overlay back to inactive (user submitted, selection done)
       setOverlayInactive(components.overlayView, components.window, components);
       components.overlayView.webContents.send('overlay:mode-change', 'inactive');
+
+      return taskId;
     },
   );
+
+  // --- Sidebar IPC handlers ---
+
+  // Sidebar expand (renderer -> main)
+  ipcMain.handle('sidebar:expand', async () => {
+    components.setSidebarState('expanded');
+  });
+
+  // Sidebar collapse (renderer -> main)
+  ipcMain.handle('sidebar:collapse', async () => {
+    components.setSidebarState('minimized');
+  });
+
+  // Sidebar task dismiss (renderer -> main)
+  ipcMain.handle('sidebar:task-dismiss', async (_event, data: { id: string }) => {
+    agentManager.dismissTask(data.id);
+    // If no tasks remain, hide sidebar
+    if (agentManager.getAllTasks().length === 0) {
+      components.setSidebarState('hidden');
+    }
+  });
+
+  // Sidebar task retry (renderer -> main) -- per D-19
+  ipcMain.handle('sidebar:task-retry', async (_event, data: { id: string }) => {
+    const task = agentManager.getTask(data.id);
+    if (!task) return;
+
+    // Prefill the overlay instruction input with original text
+    components.overlayView.webContents.send('overlay:prefill-instruction', {
+      instruction: task.instruction,
+    });
+
+    // Activate overlay for new selection + instruction
+    setOverlayActive(components.overlayView, components.window, components);
+    components.overlayView.webContents.send('overlay:mode-change', 'selection');
+
+    // Dismiss the errored task (it will be replaced by the new submission)
+    agentManager.dismissTask(data.id);
+  });
 }

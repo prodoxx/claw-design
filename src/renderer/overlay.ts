@@ -570,4 +570,17 @@ if (isInBrowser()) {
       console.debug('[claw-overlay] mode:', mode);
     });
   }
+
+  // Wire prefill for retry (D-19): when retry is clicked in sidebar,
+  // the overlay receives the original instruction to pre-populate the textarea.
+  if (window.claw?.onPrefillInstruction) {
+    window.claw.onPrefillInstruction((data) => {
+      const ta = document.getElementById('claw-input-textarea') as HTMLTextAreaElement;
+      if (ta) {
+        ta.value = data.instruction;
+        // Trigger auto-expand and enable submit button
+        ta.dispatchEvent(new Event('input'));
+      }
+    });
+  }
 }

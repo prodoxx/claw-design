@@ -69,6 +69,11 @@ const overlayAPI = {
     bounds: { x: number; y: number; width: number; height: number };
   }): Promise<void> =>
     ipcRenderer.invoke('overlay:submit-instruction', data),
+
+  /** Listen for instruction prefill events (retry flow -- D-19) */
+  onPrefillInstruction: (callback: (data: { instruction: string }) => void): void => {
+    ipcRenderer.on('overlay:prefill-instruction', (_event, data) => callback(data));
+  },
 };
 
 contextBridge.exposeInMainWorld('claw', overlayAPI);
