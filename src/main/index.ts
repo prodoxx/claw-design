@@ -22,9 +22,9 @@ app.whenReady().then(() => {
   // Wire AgentManager status updates to sidebar view
   agentManager.setOnTaskUpdate((update) => {
     components.sidebarView.webContents.send('sidebar:task-update', update);
-    // First task: transition sidebar from hidden to minimized
+    // First task: show sidebar expanded
     if (components.getSidebarState() === 'hidden') {
-      components.setSidebarState('minimized');
+      components.setSidebarState('expanded');
     }
   });
 

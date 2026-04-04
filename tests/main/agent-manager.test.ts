@@ -55,6 +55,31 @@ function createDeferredQuery(messages: Array<Record<string, unknown>>) {
   };
 }
 
+// ---- Mock child_process.spawn (for claude login auto-auth) ----
+let mockSpawnExitCode = 1; // default: login fails in tests
+vi.mock('node:child_process', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:child_process')>();
+  return {
+    ...actual,
+    spawn: vi.fn((_cmd: string, _args: string[]) => {
+      const listeners: Record<string, Array<(...args: unknown[]) => void>> = {};
+      const child = {
+        on(event: string, cb: (...args: unknown[]) => void) {
+          (listeners[event] ??= []).push(cb);
+          if (event === 'close') {
+            // Fire close async with the configured exit code
+            setTimeout(() => cb(mockSpawnExitCode), 10);
+          }
+          return child;
+        },
+        kill: vi.fn(),
+        pid: 12345,
+      };
+      return child;
+    }),
+  };
+});
+
 vi.mock('@anthropic-ai/claude-agent-sdk', () => ({
   query: vi.fn((_params: unknown) => {
     // If there are deferred queries waiting, use the first one
@@ -412,6 +437,88 @@ describe('AgentManager', () => {
     });
 
     const errorUpdate = updates.find((u) => u.id === id && u.status === 'error');
-    expect(errorUpdate!.error).toContain('Authentication failed');
+    expect(errorUpdate!.error).toContain('claude login');
+  });
+
+  it('detects auth errors on SDKAssistantMessage.error, attempts auto-login, then errors', async () => {
+    // Auto-login will fail (mockSpawnExitCode = 1 by default), so task should end as error
+    mockSpawnExitCode = 1;
+    mockQueryMessages = [
+      { type: 'system', subtype: 'init', tools: [], mcp_servers: [], model: 'claude-4' },
+      {
+        type: 'assistant',
+        error: 'authentication_failed',
+        message: { content: [{ type: 'text', text: 'Invalid API key' }] },
+      },
+      { type: 'result', subtype: 'success', result: '', is_error: false, duration_ms: 50 },
+    ];
+
+    const id = await manager.submitTask(makeInput());
+    await vi.waitFor(() => {
+      const final = updates.filter((u) => u.id === id);
+      const hasResult = final.some((u) => u.status === 'error');
+      expect(hasResult).toBe(true);
+    }, { timeout: 2000 });
+
+    // Should be error, NOT done
+    const statuses = updates.filter((u) => u.id === id).map((u) => u.status);
+    expect(statuses).toContain('error');
+    expect(statuses).not.toContain('done');
+
+    const errorUpdate = updates.find((u) => u.id === id && u.status === 'error');
+    expect(errorUpdate!.error).toContain('claude login');
+  });
+
+  it('detects auth errors on SDKAuthStatusMessage, attempts auto-login, then errors', async () => {
+    // Auto-login will fail (mockSpawnExitCode = 1 by default), so task should end as error
+    mockSpawnExitCode = 1;
+    mockQueryMessages = [
+      { type: 'system', subtype: 'init', tools: [], mcp_servers: [], model: 'claude-4' },
+      {
+        type: 'auth_status',
+        isAuthenticating: false,
+        output: [],
+        error: 'Invalid API key',
+      },
+      { type: 'result', subtype: 'success', result: '', is_error: false, duration_ms: 50 },
+    ];
+
+    const id = await manager.submitTask(makeInput());
+    await vi.waitFor(() => {
+      const final = updates.filter((u) => u.id === id);
+      const hasResult = final.some((u) => u.status === 'error');
+      expect(hasResult).toBe(true);
+    }, { timeout: 2000 });
+
+    // Should be error, NOT done
+    const statuses = updates.filter((u) => u.id === id).map((u) => u.status);
+    expect(statuses).toContain('error');
+    expect(statuses).not.toContain('done');
+
+    const errorUpdate = updates.find((u) => u.id === id && u.status === 'error');
+    expect(errorUpdate!.error).toContain('claude login');
+  });
+
+  it('logs auth status and assistant errors to task logs', async () => {
+    mockQueryMessages = [
+      { type: 'system', subtype: 'init', tools: [], mcp_servers: [], model: 'claude-4' },
+      {
+        type: 'assistant',
+        error: 'billing_error',
+        message: { content: [{ type: 'text', text: 'Billing issue' }] },
+      },
+      { type: 'result', subtype: 'success', result: '', is_error: false, duration_ms: 50 },
+    ];
+
+    const id = await manager.submitTask(makeInput());
+    await vi.waitFor(() => {
+      const final = updates.filter((u) => u.id === id);
+      expect(final.some((u) => u.status === 'error' || u.status === 'done')).toBe(true);
+    });
+
+    const logs = manager.getTaskLogs(id);
+    const apiErrorLog = logs.find((l) => l.content.includes('API error: billing_error'));
+    expect(apiErrorLog).toBeDefined();
+    expect(apiErrorLog!.type).toBe('status');
   });
 });

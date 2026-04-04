@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import {
   query,
   type SDKMessage,
@@ -136,6 +137,7 @@ export class AgentManager {
   private readonly maxParallel = 3;
   private readonly projectDir: string;
   private onTaskUpdate: ((update: TaskUpdate) => void) | null = null;
+  private loginInProgress: Promise<boolean> | null = null;
 
   constructor(projectDir: string) {
     this.projectDir = projectDir;
@@ -352,6 +354,36 @@ export class AgentManager {
         } else if (msg.type === 'result') {
           // If fatal errors accumulated during the stream, override success
           if (task.fatalErrors.length > 0) {
+            const isAuthError = task.fatalErrors.some(
+              (e) =>
+                e.includes('authentication_failed') ||
+                e.includes('Invalid API key'),
+            );
+
+            if (isAuthError) {
+              // Auto-login: run `claude login`, then retry
+              task.activity = 'Authenticating...';
+              this.addLog(task, 'status', 'Auth required — running claude login...');
+              this.emitUpdate(task);
+
+              const loginOk = await this.runClaudeLogin();
+              if (loginOk) {
+                // Reset task state and re-execute
+                task.status = 'sending';
+                task.error = undefined;
+                task.activity = 'Retrying after login...';
+                task.fatalErrors = [];
+                this.addLog(task, 'status', 'Authenticated — retrying...');
+                this.emitUpdate(task);
+                // Release the finally block's decrement, then re-run
+                try { q.close(); } catch { /* already closed */ }
+                this.activeCount--;
+                this.activeCount++;
+                this.executeTask(task);
+                return; // skip the finally block
+              }
+            }
+
             task.status = 'error';
             task.error = humanReadableError(task.fatalErrors);
             task.activity = undefined;
@@ -393,6 +425,34 @@ export class AgentManager {
       this.activeCount--;
       this.processQueue();
     }
+  }
+
+  /**
+   * Run `claude login` and wait for it to complete.
+   * Returns true if login succeeded, false otherwise.
+   * Deduplicates concurrent login attempts.
+   */
+  private runClaudeLogin(): Promise<boolean> {
+    if (this.loginInProgress) return this.loginInProgress;
+
+    this.loginInProgress = new Promise<boolean>((resolve) => {
+      const child = spawn('claude', ['login'], {
+        stdio: 'ignore',
+        env: { ...process.env },
+      });
+
+      child.on('close', (code) => {
+        this.loginInProgress = null;
+        resolve(code === 0);
+      });
+
+      child.on('error', () => {
+        this.loginInProgress = null;
+        resolve(false);
+      });
+    });
+
+    return this.loginInProgress;
   }
 
   /**

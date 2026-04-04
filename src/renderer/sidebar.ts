@@ -362,32 +362,18 @@ function handleCollapse(): void {
 }
 
 /**
- * Auto-expand briefly (D-06): expand, then auto-collapse after 2000ms.
- * If user interacts (mouseenter), cancel the auto-collapse timer.
+ * Expand the sidebar for a new task. Stays expanded (no auto-collapse).
  */
-function autoExpandBrief(): void {
-  // Cancel any existing auto-expand timer
+function autoExpandForTask(): void {
   if (autoExpandTimer !== null) {
     clearTimeout(autoExpandTimer);
     autoExpandTimer = null;
   }
 
-  // Expand
   window.clawSidebar.expand();
   const result = sidebarTransition(state, { type: 'EXPAND' });
   state = result.state;
   updateSidebarState(state.visual);
-
-  // Set auto-collapse timer (2000ms per D-06)
-  autoExpandTimer = setTimeout(() => {
-    autoExpandTimer = null;
-    const timeoutResult = sidebarTransition(state, {
-      type: 'AUTO_EXPAND_TIMEOUT',
-    });
-    state = timeoutResult.state;
-    window.clawSidebar.collapse();
-    updateSidebarState(state.visual);
-  }, 2000);
 }
 
 /**
@@ -464,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateBadge();
 
       if (result.shouldAutoExpand) {
-        autoExpandBrief();
+        autoExpandForTask();
       } else {
         updateSidebarState(state.visual);
       }
