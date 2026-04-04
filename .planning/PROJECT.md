@@ -20,11 +20,13 @@ Developers can visually select any part of their running website and describe ch
 - [x] Electron app that loads the user's localhost URL — Validated in Phase 2
 - [x] Transparent overlay layer with toolbar (drag handle + selection button) — Validated in Phase 2
 
+- [x] Freeform region selection overlay (draw a box around any area) — Validated in Phase 3
+- [x] Element hover/click selection (inspect-style element detection) — Validated in Phase 3
+- [x] Capture screenshot of selected region — Validated in Phase 3
+- [x] Capture DOM elements within selected region (structure, classes, IDs, text content) — Validated in Phase 3
+- [x] Input box appears after selection for the user to describe desired changes — Validated in Phase 3
+
 ### Active
-- [ ] Freeform region selection overlay (draw a box around any area)
-- [ ] Capture screenshot of selected region
-- [ ] Capture DOM elements within selected region (structure, classes, IDs, text content)
-- [ ] Input box appears after selection for the user to describe desired changes
 - [ ] Send screenshot + DOM context + user instruction to Claude Code session
 - [ ] Claude Code edits source files based on the visual context and instruction
 - [ ] Dev server HMR reflects changes without manual refresh
@@ -61,8 +63,10 @@ Developers can visually select any part of their running website and describe ch
 | Electron over Chrome extension | CLI-first flow means one command controls everything; no separate extension install needed | Validated Phase 2 |
 | BaseWindow + dual WebContentsView | Site view (sandboxed) + transparent overlay view; bounds-toggle for mouse passthrough | Validated Phase 2 |
 | setBackgroundColor on View, not WebContents | Electron 36 API — method lives on View base class | Validated Phase 2 |
-| Freeform region selection over single-element click | Captures user intent about an area, more flexible than DOM-element-level selection | — Pending |
-| Screenshot + DOM for context | Gives Claude both visual and structural understanding of what the user is pointing at | — Pending |
+| Freeform region + element selection (both modes) | Rectangle captures area intent; element mode adds precision; user chooses per interaction | Validated Phase 3 |
+| Screenshot + DOM for context | Gives Claude both visual and structural understanding of what the user is pointing at | Validated Phase 3 |
+| Preload scripts must build as CJS | Electron preload rejects ESM import statements; electron-vite config needs format: 'cjs' | Validated Phase 3 |
+| Near-invisible overlay background for hit-testing | Chromium skips hit-testing on fully transparent views; rgba(0,0,0,0.01) provides surface | Validated Phase 3 |
 | Spawn Claude Code CLI (not API) | Leverages Claude Code's existing codebase navigation, tool use, and multi-file editing | — Pending |
 | Framework agnostic from v1 | Claude Code already handles any codebase; DOM capture is framework-independent | — Pending |
 | No undo for v1 | Git provides undo capability; building custom undo adds complexity without core value | — Pending |
@@ -85,4 +89,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 2 completion*
+*Last updated: 2026-04-04 after Phase 3 completion*
