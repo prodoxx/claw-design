@@ -19,7 +19,7 @@ import {
 export function registerIpcHandlers(components: WindowComponents): void {
   // Activate selection mode: expand overlay to full window, notify renderer
   ipcMain.handle('overlay:activate-selection', async () => {
-    setOverlayActive(components.overlayView, components.window);
+    setOverlayActive(components.overlayView, components.window, components);
     components.overlayView.webContents.send(
       'overlay:mode-change',
       'selection',
@@ -28,7 +28,7 @@ export function registerIpcHandlers(components: WindowComponents): void {
 
   // Deactivate selection mode: shrink overlay to indicator, notify renderer
   ipcMain.handle('overlay:deactivate-selection', async () => {
-    setOverlayInactive(components.overlayView, components.window);
+    setOverlayInactive(components.overlayView, components.window, components);
     components.overlayView.webContents.send('overlay:mode-change', 'inactive');
   });
 
@@ -96,7 +96,7 @@ export function registerIpcHandlers(components: WindowComponents): void {
         bounds: data.bounds,
       });
       // Shrink overlay back to inactive
-      setOverlayInactive(components.overlayView, components.window);
+      setOverlayInactive(components.overlayView, components.window, components);
       components.overlayView.webContents.send('overlay:mode-change', 'inactive');
     },
   );

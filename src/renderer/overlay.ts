@@ -321,15 +321,24 @@ if (isInBrowser()) {
 
   // --- Event listeners ---
 
+  // Activate/deactivate overlay hit surface
+  function activateOverlaySurface(): void {
+    document.body.classList.add('claw-overlay--active');
+  }
+  function deactivateOverlaySurface(): void {
+    document.body.classList.remove('claw-overlay--active');
+  }
+
   // Rectangle select button
   const selectBtn = document.getElementById('claw-select-btn');
   if (selectBtn) {
-    selectBtn.addEventListener('click', (e) => {
+    selectBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
       if (state.mode === 'inactive' || state.mode === 'elem-idle' || state.mode === 'elem-hovering' || state.mode === 'elem-committed') {
         hideInputBar();
+        await window.claw?.activateSelection();
+        activateOverlaySurface();
         dispatch({ type: 'ACTIVATE_RECT' });
-        window.claw?.activateSelection();
       } else if (
         state.mode === 'rect-idle' ||
         state.mode === 'rect-drawing' ||
@@ -337,6 +346,7 @@ if (isInBrowser()) {
       ) {
         hideInputBar();
         dispatch({ type: 'CANCEL' });
+        deactivateOverlaySurface();
         window.claw?.deactivateSelection();
       }
     });
@@ -345,12 +355,13 @@ if (isInBrowser()) {
   // Element select button
   const elemBtn = document.getElementById('claw-elem-btn');
   if (elemBtn) {
-    elemBtn.addEventListener('click', (e) => {
+    elemBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
       if (state.mode === 'inactive' || state.mode === 'rect-idle' || state.mode === 'rect-drawing' || state.mode === 'rect-committed') {
         hideInputBar();
+        await window.claw?.activateSelection();
+        activateOverlaySurface();
         dispatch({ type: 'ACTIVATE_ELEM' });
-        window.claw?.activateSelection();
       } else if (
         state.mode === 'elem-idle' ||
         state.mode === 'elem-hovering' ||
@@ -358,6 +369,7 @@ if (isInBrowser()) {
       ) {
         hideInputBar();
         dispatch({ type: 'CANCEL' });
+        deactivateOverlaySurface();
         window.claw?.deactivateSelection();
       }
     });
@@ -413,6 +425,7 @@ if (isInBrowser()) {
     if (e.key === 'Escape' && state.mode !== 'inactive') {
       hideInputBar();
       dispatch({ type: 'CANCEL' });
+      deactivateOverlaySurface();
       window.claw?.deactivateSelection();
     }
   });
@@ -540,6 +553,7 @@ if (isInBrowser()) {
     // Dispatch CANCEL to clear selection state
     dispatch({ type: 'CANCEL' });
     // Deactivate overlay (shrink bounds) per D-12
+    deactivateOverlaySurface();
     await window.claw.deactivateSelection();
   }
 

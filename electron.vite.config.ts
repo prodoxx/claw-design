@@ -16,6 +16,9 @@ export default defineConfig({
           index: resolve(__dirname, 'src/preload/index.ts'),
           overlay: resolve(__dirname, 'src/preload/overlay.ts'),
         },
+        output: {
+          format: 'cjs',
+        },
       },
     },
   },

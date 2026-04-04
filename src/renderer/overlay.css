@@ -1,5 +1,6 @@
 /* Overlay page: fully transparent, no interaction by default */
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   width: 100%;
@@ -7,6 +8,14 @@ html, body {
   background: transparent;
   overflow: hidden;
   user-select: none;
+}
+
+/* Active selection mode: near-invisible background to capture mouse events
+   across the full overlay surface. Without this, Chromium hit-testing passes
+   clicks through fully transparent regions to the site view underneath. */
+body.claw-overlay--active {
+  /* background: rgba(0, 0, 0, 0.2); */
+  background: rgba(130, 163, 173, 0.2);
 }
 
 /* Vertical pill toolbar — view is already positioned at bottom-right by main process */
@@ -191,6 +200,7 @@ html, body {
 
 /* Accessibility: reduced motion */
 @media (prefers-reduced-motion: reduce) {
+
   .claw-element-highlight,
   .claw-toolbar,
   .claw-toolbar-btn,

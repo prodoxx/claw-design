@@ -5,6 +5,7 @@ export interface WindowComponents {
   window: BaseWindow;
   siteView: WebContentsView;
   overlayView: WebContentsView;
+  setOverlayIsActive: (active: boolean) => void;
 }
 
 /**
@@ -49,7 +50,7 @@ export function createMainWindow(
       sandbox: true,
       nodeIntegration: false,
       webSecurity: true,
-      preload: path.join(__dirname, '../preload/overlay.mjs'),
+      preload: path.join(__dirname, '../preload/overlay.cjs'),
     },
   });
 
@@ -64,18 +65,25 @@ export function createMainWindow(
     path.join(__dirname, '../renderer/overlay.html'),
   );
 
+  // Track overlay state so resize handler preserves it
+  let overlayIsActive = false;
+
   // D-13: Auto-sync both views to window content area on resize
   function syncBounds(): void {
     const { width, height } = win.getContentBounds();
     siteView.setBounds({ x: 0, y: 0, width, height });
-    // Start overlay in inactive state (only indicator area)
-    setOverlayInactive(overlayView, win);
+    // Preserve overlay state across resizes
+    if (overlayIsActive) {
+      overlayView.setBounds({ x: 0, y: 0, width, height });
+    } else {
+      setOverlayInactive(overlayView, win);
+    }
   }
 
   win.on('resize', syncBounds);
   syncBounds();
 
-  return { window: win, siteView, overlayView };
+  return { window: win, siteView, overlayView, setOverlayIsActive: (active: boolean) => { overlayIsActive = active; } };
 }
 
 /**
@@ -86,11 +94,13 @@ export function createMainWindow(
 export function setOverlayInactive(
   overlayView: WebContentsView,
   win: BaseWindow,
+  components?: WindowComponents,
 ): void {
   const { width, height } = win.getContentBounds();
   // Toolbar pill dimensions + margin from window edge
+  // 3 items × 36px + 2 gaps × 4px + padding 20px = 136px
   const toolbarWidth = 52;
-  const toolbarHeight = 96;
+  const toolbarHeight = 136;
   const margin = 16;
   overlayView.setBounds({
     x: width - toolbarWidth - margin,
@@ -98,6 +108,7 @@ export function setOverlayInactive(
     width: toolbarWidth + margin,
     height: toolbarHeight + margin,
   });
+  components?.setOverlayIsActive(false);
 }
 
 /**
@@ -106,7 +117,9 @@ export function setOverlayInactive(
 export function setOverlayActive(
   overlayView: WebContentsView,
   win: BaseWindow,
+  components?: WindowComponents,
 ): void {
   const { width, height } = win.getContentBounds();
   overlayView.setBounds({ x: 0, y: 0, width, height });
+  components?.setOverlayIsActive(true);
 }

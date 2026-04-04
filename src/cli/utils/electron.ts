@@ -43,5 +43,13 @@ export function spawnElectron(url: string, projectName: string): ChildProcess {
     },
   });
 
+  // Forward Electron main process logs to CLI terminal
+  child.stdout?.on('data', (chunk: Buffer) => {
+    process.stdout.write(chunk);
+  });
+  child.stderr?.on('data', (chunk: Buffer) => {
+    process.stderr.write(chunk);
+  });
+
   return child;
 }

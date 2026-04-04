@@ -132,12 +132,12 @@ describe('createMainWindow', () => {
     expect(overlayCallArgs.webPreferences.nodeIntegration).toBe(false);
   });
 
-  it('sets overlay preload path ending in overlay.mjs', () => {
+  it('sets overlay preload path ending in overlay.cjs', () => {
     createMainWindow('http://localhost:3000', 'my-app', 3000);
     const overlayCallArgs = vi.mocked(WebContentsView).mock.calls[1][0] as {
       webPreferences: { preload: string };
     };
-    expect(overlayCallArgs.webPreferences.preload).toMatch(/overlay\.mjs$/);
+    expect(overlayCallArgs.webPreferences.preload).toMatch(/overlay\.cjs$/);
   });
 
   it('calls setBackgroundColor with #00000000 on overlay view', () => {
@@ -196,9 +196,9 @@ describe('setOverlayInactive', () => {
 
     expect(mockOverlay.setBounds).toHaveBeenCalledWith({
       x: 1212, // 1280 - 52 - 16
-      y: 688,  // 800 - 96 - 16
+      y: 648,  // 800 - 136 - 16
       width: 68,  // 52 + 16 margin
-      height: 112, // 96 + 16 margin
+      height: 152, // 136 + 16 margin
     });
   });
 });
