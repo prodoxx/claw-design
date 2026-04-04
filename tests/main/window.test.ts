@@ -80,11 +80,14 @@ describe('createMainWindow', () => {
     mockWebContentsViewInstances.length = 0;
   });
 
-  it('returns object with window, siteView, overlayView properties', () => {
+  it('returns object with window, siteView, overlayView, sidebarView properties', () => {
     const result = createMainWindow('http://localhost:3000', 'my-app', 3000);
     expect(result).toHaveProperty('window');
     expect(result).toHaveProperty('siteView');
     expect(result).toHaveProperty('overlayView');
+    expect(result).toHaveProperty('sidebarView');
+    expect(result).toHaveProperty('setSidebarState');
+    expect(result).toHaveProperty('getSidebarState');
   });
 
   it('creates BaseWindow with width=1280, height=800, center=true', () => {
@@ -160,10 +163,10 @@ describe('createMainWindow', () => {
     );
   });
 
-  it('adds both views as children via addChildView', () => {
+  it('adds all three views as children via addChildView', () => {
     createMainWindow('http://localhost:3000', 'my-app', 3000);
     const win = mockBaseWindowInstances[0];
-    expect(win.contentView.addChildView).toHaveBeenCalledTimes(2);
+    expect(win.contentView.addChildView).toHaveBeenCalledTimes(3);
   });
 
   it('registers resize event listener on window', () => {
@@ -222,6 +225,158 @@ describe('setOverlayActive', () => {
       y: 0,
       width: 1280,
       height: 800,
+    });
+  });
+
+  it('auto-minimizes sidebar when it is expanded (D-08)', () => {
+    const components = createMainWindow('http://localhost:3000', 'my-app', 3000);
+    // Set sidebar to expanded
+    components.setSidebarState('expanded');
+
+    // Now activate overlay
+    setOverlayActive(
+      components.overlayView as any,
+      components.window as any,
+      components,
+    );
+
+    // Sidebar should be minimized
+    expect(components.getSidebarState()).toBe('minimized');
+  });
+});
+
+describe('sidebarView', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockBaseWindowInstances.length = 0;
+    mockWebContentsViewInstances.length = 0;
+  });
+
+  it('creates sidebarView with secure webPreferences (contextIsolation, sandbox)', () => {
+    createMainWindow('http://localhost:3000', 'my-app', 3000);
+    // Third WebContentsView call is the sidebar view
+    const sidebarCallArgs = vi.mocked(WebContentsView).mock.calls[2][0] as {
+      webPreferences: Record<string, unknown>;
+    };
+    expect(sidebarCallArgs.webPreferences.contextIsolation).toBe(true);
+    expect(sidebarCallArgs.webPreferences.sandbox).toBe(true);
+    expect(sidebarCallArgs.webPreferences.nodeIntegration).toBe(false);
+  });
+
+  it('sets sidebar preload path ending in sidebar.cjs', () => {
+    createMainWindow('http://localhost:3000', 'my-app', 3000);
+    const sidebarCallArgs = vi.mocked(WebContentsView).mock.calls[2][0] as {
+      webPreferences: { preload: string };
+    };
+    expect(sidebarCallArgs.webPreferences.preload).toMatch(/sidebar\.cjs$/);
+  });
+
+  it('calls loadFile on sidebar view with path containing sidebar.html', () => {
+    createMainWindow('http://localhost:3000', 'my-app', 3000);
+    const sidebarView = mockWebContentsViewInstances[2];
+    expect(sidebarView.webContents.loadFile).toHaveBeenCalledWith(
+      expect.stringContaining('sidebar.html'),
+    );
+  });
+
+  it('starts sidebar with zero-size bounds (hidden state)', () => {
+    const components = createMainWindow('http://localhost:3000', 'my-app', 3000);
+    expect(components.getSidebarState()).toBe('hidden');
+    const sidebarView = mockWebContentsViewInstances[2];
+    // The initial setBounds call should include zero-size
+    expect(sidebarView.setBounds).toHaveBeenCalledWith(
+      expect.objectContaining({ x: 0, y: 0, width: 0, height: 0 }),
+    );
+  });
+
+  it('setSidebarState("minimized") sets correct bounds', () => {
+    const components = createMainWindow('http://localhost:3000', 'my-app', 3000);
+    const sidebarView = mockWebContentsViewInstances[2];
+    sidebarView.setBounds.mockClear();
+
+    components.setSidebarState('minimized');
+
+    expect(components.getSidebarState()).toBe('minimized');
+    expect(sidebarView.setBounds).toHaveBeenCalledWith({
+      x: 1280 - 52,
+      y: Math.round(800 / 2) - 18,
+      width: 52,
+      height: 80,
+    });
+  });
+
+  it('setSidebarState("expanded") sets sidebar bounds and shrinks site view', () => {
+    const components = createMainWindow('http://localhost:3000', 'my-app', 3000);
+    const sidebarView = mockWebContentsViewInstances[2];
+    const siteView = mockWebContentsViewInstances[0];
+    sidebarView.setBounds.mockClear();
+    siteView.setBounds.mockClear();
+
+    components.setSidebarState('expanded');
+
+    expect(components.getSidebarState()).toBe('expanded');
+    // Sidebar should be positioned at right edge
+    expect(sidebarView.setBounds).toHaveBeenCalledWith({
+      x: 1280 - 296,
+      y: 0,
+      width: 296,
+      height: 800,
+    });
+    // Site view should be narrowed
+    expect(siteView.setBounds).toHaveBeenCalledWith(
+      expect.objectContaining({
+        x: 0,
+        y: 0,
+        width: 1280 - 280,
+        height: 800,
+      }),
+    );
+  });
+
+  it('setSidebarState("hidden") from expanded restores site view to full width', () => {
+    const components = createMainWindow('http://localhost:3000', 'my-app', 3000);
+    const siteView = mockWebContentsViewInstances[0];
+
+    // First expand
+    components.setSidebarState('expanded');
+    siteView.setBounds.mockClear();
+
+    // Then hide
+    components.setSidebarState('hidden');
+
+    expect(components.getSidebarState()).toBe('hidden');
+    // syncBounds should restore site view to full width
+    expect(siteView.setBounds).toHaveBeenCalledWith(
+      expect.objectContaining({
+        x: 0,
+        y: 0,
+        width: 1280,
+        height: 800,
+      }),
+    );
+  });
+
+  it('syncBounds repositions sidebar on resize', () => {
+    const components = createMainWindow('http://localhost:3000', 'my-app', 3000);
+    const win = mockBaseWindowInstances[0];
+    const sidebarView = mockWebContentsViewInstances[2];
+
+    components.setSidebarState('minimized');
+    sidebarView.setBounds.mockClear();
+
+    // Simulate resize
+    win.getContentBounds.mockReturnValue({ x: 0, y: 0, width: 1920, height: 1080 });
+    const resizeHandler = win.on.mock.calls.find(
+      (call: unknown[]) => call[0] === 'resize',
+    )?.[1] as () => void;
+    resizeHandler();
+
+    // Sidebar should be repositioned for new window size
+    expect(sidebarView.setBounds).toHaveBeenCalledWith({
+      x: 1920 - 52,
+      y: Math.round(1080 / 2) - 18,
+      width: 52,
+      height: 80,
     });
   });
 });

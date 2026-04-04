@@ -40,6 +40,7 @@ export function spawnElectron(url: string, projectName: string): ChildProcess {
       CLAW_URL: url,
       CLAW_PROJECT_NAME: projectName,
       CLAW_CWD: process.cwd(),
+      CLAW_PROJECT_DIR: process.cwd(),
     },
   });
 

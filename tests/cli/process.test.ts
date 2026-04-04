@@ -75,22 +75,6 @@ describe('shutdown behavior', () => {
     expect(mockKill).toHaveBeenCalledWith(12345, 'SIGTERM', expect.any(Function));
   });
 
-  it('calls claudeSession.close() when SIGINT fires', () => {
-    const mockClose = vi.fn();
-    const processes: ManagedProcesses = {
-      claudeSession: { close: mockClose },
-    };
-    registerShutdownHandlers(processes);
-
-    const sigintCall = vi.mocked(process.on).mock.calls.find(
-      (call) => call[0] === 'SIGINT'
-    );
-    const handler = sigintCall![1] as Function;
-    handler();
-
-    expect(mockClose).toHaveBeenCalledTimes(1);
-  });
-
   it('second shutdown call is no-op (tree-kill called only once, not twice)', () => {
     const processes: ManagedProcesses = {
       devServer: { pid: 12345 },

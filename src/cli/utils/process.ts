@@ -7,7 +7,6 @@ import pc from 'picocolors';
  */
 export interface ManagedProcesses {
   devServer?: { pid: number };
-  claudeSession?: { close: () => void };
   electronProcess?: { pid: number };
 }
 
@@ -25,13 +24,6 @@ export function registerShutdownHandlers(processes: ManagedProcesses): void {
     shuttingDown = true;
 
     console.log(pc.dim(`\n  Shutting down (${signal})...`));
-
-    // Step 1: Close Claude session (graceful)
-    try {
-      processes.claudeSession?.close();
-    } catch {
-      /* ignore */
-    }
 
     // Force exit after 5s if kills hang
     setTimeout(() => process.exit(1), 5000).unref();

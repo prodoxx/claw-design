@@ -22,7 +22,6 @@ vi.mock('../../src/cli/utils/port-detect.js', () => ({
 
 vi.mock('../../src/cli/utils/claude.js', () => ({
   isClaudeInstalled: vi.fn(),
-  spawnClaudeSession: vi.fn(),
 }));
 
 vi.mock('../../src/cli/utils/electron.js', () => ({
@@ -59,7 +58,7 @@ vi.mock('picocolors', () => ({
 
 import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionError } from '../../src/cli/utils/dev-server.js';
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../../src/cli/utils/port-detect.js';
-import { isClaudeInstalled, spawnClaudeSession } from '../../src/cli/utils/claude.js';
+import { isClaudeInstalled } from '../../src/cli/utils/claude.js';
 import { buildElectron, spawnElectron } from '../../src/cli/utils/electron.js';
 import { registerShutdownHandlers } from '../../src/cli/utils/process.js';
 import { createSpinner, printReady, printError } from '../../src/cli/utils/output.js';
@@ -72,7 +71,6 @@ const mockExtractPortFromOutput = vi.mocked(extractPortFromOutput);
 const mockWaitForPort = vi.mocked(waitForPort);
 const mockGetProcessOnPort = vi.mocked(getProcessOnPort);
 const mockIsClaudeInstalled = vi.mocked(isClaudeInstalled);
-const mockSpawnClaudeSession = vi.mocked(spawnClaudeSession);
 const mockBuildElectron = vi.mocked(buildElectron);
 const mockSpawnElectron = vi.mocked(spawnElectron);
 const mockRegisterShutdownHandlers = vi.mocked(registerShutdownHandlers);
@@ -144,7 +142,7 @@ describe('startCommand', () => {
     vi.useRealTimers();
   });
 
-  it('happy path: detects dev server, waits for port, launches Claude', async () => {
+  it('happy path: detects dev server, waits for port, launches Electron', async () => {
     // Setup all mocks for success path
     mockIsClaudeInstalled.mockReturnValue(true);
     mockDetectDevServerScript.mockResolvedValue({ name: 'dev', command: 'vite' });
@@ -159,22 +157,19 @@ describe('startCommand', () => {
     }, 10);
 
     mockWaitForPort.mockResolvedValue(undefined);
-    mockSpawnClaudeSession.mockResolvedValue({ sendMessage: vi.fn(), close: vi.fn() });
 
     await startCommand({});
 
-    // Assertions: all 8 steps executed
+    // Assertions: all steps executed (Claude session no longer spawned eagerly)
     expect(mockIsClaudeInstalled).toHaveBeenCalled();
     expect(mockDetectDevServerScript).toHaveBeenCalledWith(process.cwd());
     expect(mockSpawnDevServer).toHaveBeenCalled();
     expect(mockWaitForPort).toHaveBeenCalledWith(3000, { timeout: 30_000 });
-    expect(mockSpawnClaudeSession).toHaveBeenCalledWith(process.cwd());
     expect(mockBuildElectron).toHaveBeenCalled();
     expect(mockSpawnElectron).toHaveBeenCalledWith('http://localhost:3000', 'test-project');
     expect(mockRegisterShutdownHandlers).toHaveBeenCalledWith(
       expect.objectContaining({
         devServer: { pid: 12345 },
-        claudeSession: expect.objectContaining({ sendMessage: expect.any(Function), close: expect.any(Function) }),
         electronProcess: { pid: 54321 },
       })
     );
@@ -186,7 +181,7 @@ describe('startCommand', () => {
     mockSpawnDevServer.mockReturnValue(mockDevServer as any);
     mockExtractPortFromOutput.mockReturnValue(8000);
     mockWaitForPort.mockResolvedValue(undefined);
-    mockSpawnClaudeSession.mockResolvedValue({ sendMessage: vi.fn(), close: vi.fn() });
+
 
     setTimeout(() => {
       mockDevServer.stdout.emit('data', Buffer.from('Serving on port 8000'));
@@ -205,7 +200,7 @@ describe('startCommand', () => {
     mockDetectDevServerScript.mockResolvedValue({ name: 'dev', command: 'vite' });
     mockSpawnDevServer.mockReturnValue(mockDevServer as any);
     mockWaitForPort.mockResolvedValue(undefined);
-    mockSpawnClaudeSession.mockResolvedValue({ sendMessage: vi.fn(), close: vi.fn() });
+
 
     await startCommand({ port: '4000' });
 
@@ -269,7 +264,7 @@ describe('startCommand', () => {
     mockSpawnDevServer.mockReturnValue(mockDevServer as any);
     mockExtractPortFromOutput.mockReturnValue(3000);
     mockWaitForPort.mockResolvedValue(undefined);
-    mockSpawnClaudeSession.mockResolvedValue({ sendMessage: vi.fn(), close: vi.fn() });
+
 
     setTimeout(() => {
       mockDevServer.stdout.emit('data', Buffer.from('http://localhost:3000'));
@@ -287,7 +282,7 @@ describe('startCommand', () => {
     mockSpawnDevServer.mockReturnValue(mockDevServer as any);
     mockExtractPortFromOutput.mockReturnValue(3000);
     mockWaitForPort.mockResolvedValue(undefined);
-    mockSpawnClaudeSession.mockResolvedValue({ sendMessage: vi.fn(), close: vi.fn() });
+
 
     setTimeout(() => {
       mockDevServer.stdout.emit('data', Buffer.from('http://localhost:3000'));
@@ -304,7 +299,7 @@ describe('startCommand', () => {
     mockSpawnDevServer.mockReturnValue(mockDevServer as any);
     mockExtractPortFromOutput.mockReturnValue(3000);
     mockWaitForPort.mockResolvedValue(undefined);
-    mockSpawnClaudeSession.mockResolvedValue({ sendMessage: vi.fn(), close: vi.fn() });
+
 
     setTimeout(() => {
       mockDevServer.stdout.emit('data', Buffer.from('http://localhost:3000'));

@@ -15,6 +15,7 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'src/preload/index.ts'),
           overlay: resolve(__dirname, 'src/preload/overlay.ts'),
+          sidebar: resolve(__dirname, 'src/preload/sidebar.ts'),
         },
         output: {
           format: 'cjs',
@@ -28,6 +29,7 @@ export default defineConfig({
       rollupOptions: {
         input: {
           overlay: resolve(__dirname, 'src/renderer/overlay.html'),
+          sidebar: resolve(__dirname, 'src/renderer/sidebar.html'),
         },
       },
     },

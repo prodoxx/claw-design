@@ -5,7 +5,10 @@ export interface WindowComponents {
   window: BaseWindow;
   siteView: WebContentsView;
   overlayView: WebContentsView;
+  sidebarView: WebContentsView;
   setOverlayIsActive: (active: boolean) => void;
+  setSidebarState: (state: 'hidden' | 'minimized' | 'expanded') => void;
+  getSidebarState: () => 'hidden' | 'minimized' | 'expanded';
 }
 
 /**
@@ -65,25 +68,92 @@ export function createMainWindow(
     path.join(__dirname, '../renderer/overlay.html'),
   );
 
+  // Sidebar view (topmost layer) -- separate WebContentsView for persistence across overlay bounds toggle
+  const sidebarView = new WebContentsView({
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: true,
+      nodeIntegration: false,
+      webSecurity: true,
+      preload: path.join(__dirname, '../preload/sidebar.cjs'),
+    },
+  });
+  sidebarView.setBackgroundColor('#00000000');
+  win.contentView.addChildView(sidebarView); // Added LAST = topmost z-order
+  sidebarView.webContents.loadFile(
+    path.join(__dirname, '../renderer/sidebar.html'),
+  );
+  // Start hidden (D-03: zero-size bounds)
+  sidebarView.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+
   // Track overlay state so resize handler preserves it
   let overlayIsActive = false;
 
-  // D-13: Auto-sync both views to window content area on resize
+  // Track sidebar state for bounds management
+  let sidebarState: 'hidden' | 'minimized' | 'expanded' = 'hidden';
+
+  function applySidebarBounds(): void {
+    const { width, height } = win.getContentBounds();
+    switch (sidebarState) {
+      case 'hidden':
+        sidebarView.setBounds({ x: 0, y: 0, width: 0, height: 0 });
+        break;
+      case 'minimized':
+        sidebarView.setBounds({
+          x: width - 52,
+          y: Math.round(height / 2) - 18,
+          width: 52,
+          height: 80,
+        });
+        break;
+      case 'expanded':
+        sidebarView.setBounds({ x: width - 296, y: 0, width: 296, height });
+        // Adjust site view width when sidebar expanded
+        siteView.setBounds({ x: 0, y: 0, width: width - 280, height });
+        // Adjust overlay bounds too if active
+        if (overlayIsActive) {
+          overlayView.setBounds({ x: 0, y: 0, width: width - 280, height });
+        }
+        break;
+    }
+  }
+
+  function setSidebarState(state: 'hidden' | 'minimized' | 'expanded'): void {
+    const prevState = sidebarState;
+    sidebarState = state;
+    applySidebarBounds();
+    // If collapsing from expanded, restore site/overlay to full width
+    if (prevState === 'expanded' && state !== 'expanded') {
+      syncBounds();
+    }
+  }
+
+  // D-13: Auto-sync all views to window content area on resize
   function syncBounds(): void {
     const { width, height } = win.getContentBounds();
-    siteView.setBounds({ x: 0, y: 0, width, height });
+    const effectiveWidth = sidebarState === 'expanded' ? width - 280 : width;
+    siteView.setBounds({ x: 0, y: 0, width: effectiveWidth, height });
     // Preserve overlay state across resizes
     if (overlayIsActive) {
-      overlayView.setBounds({ x: 0, y: 0, width, height });
+      overlayView.setBounds({ x: 0, y: 0, width: effectiveWidth, height });
     } else {
       setOverlayInactive(overlayView, win);
     }
+    applySidebarBounds();
   }
 
   win.on('resize', syncBounds);
   syncBounds();
 
-  return { window: win, siteView, overlayView, setOverlayIsActive: (active: boolean) => { overlayIsActive = active; } };
+  return {
+    window: win,
+    siteView,
+    overlayView,
+    sidebarView,
+    setOverlayIsActive: (active: boolean) => { overlayIsActive = active; },
+    setSidebarState,
+    getSidebarState: () => sidebarState,
+  };
 }
 
 /**
@@ -113,6 +183,7 @@ export function setOverlayInactive(
 
 /**
  * Expand overlay to full window size for selection mode (Phase 3 triggers this).
+ * D-08: auto-minimize sidebar when entering selection mode.
  */
 export function setOverlayActive(
   overlayView: WebContentsView,
@@ -120,6 +191,10 @@ export function setOverlayActive(
   components?: WindowComponents,
 ): void {
   const { width, height } = win.getContentBounds();
+  // D-08: auto-minimize sidebar when entering selection mode
+  if (components?.getSidebarState && components.getSidebarState() === 'expanded') {
+    components.setSidebarState('minimized');
+  }
   overlayView.setBounds({ x: 0, y: 0, width, height });
   components?.setOverlayIsActive(true);
 }

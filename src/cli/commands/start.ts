@@ -1,6 +1,6 @@
 import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionError } from '../utils/dev-server.js';
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../utils/port-detect.js';
-import { isClaudeInstalled, spawnClaudeSession } from '../utils/claude.js';
+import { isClaudeInstalled } from '../utils/claude.js';
 import { buildElectron, spawnElectron } from '../utils/electron.js';
 import { registerShutdownHandlers } from '../utils/process.js';
 import { createSpinner, printReady, printError } from '../utils/output.js';
@@ -166,23 +166,9 @@ export async function startCommand(options: StartOptions): Promise<void> {
     process.exit(1);
   }
 
-  // Step 6: Launch Claude Code session (per D-10: eager, per D-12: already checked)
-  const claudeSpinner = createSpinner('Launching Claude Code...');
-  let claude: { sendMessage: (msg: string | Array<{ type: string; [key: string]: any }>) => void; close: () => void };
-
-  try {
-    claude = await spawnClaudeSession(process.cwd());
-    claudeSpinner.succeed('Claude Code session ready');
-  } catch (err) {
-    claudeSpinner.fail('Claude Code failed');
-    printError(
-      'Claude Code failed',
-      err instanceof Error ? err.message : String(err)
-    );
-    process.exit(1);
-  }
-
-  // Step 7: Build and launch Electron window (per CLI-06)
+  // Step 6: Build and launch Electron window (per CLI-06)
+  // Claude Code session is now managed by AgentManager inside the Electron main process.
+  // We pass CLAW_PROJECT_DIR as env var for AgentManager to use.
   const electronSpinner = createSpinner('Building Electron app...');
   try {
     buildElectron();
@@ -201,10 +187,10 @@ export async function startCommand(options: StartOptions): Promise<void> {
   electronSpinner.succeed(`Electron window opened ${pc.dim(`localhost:${port}`)}`);
 
 
-  // Step 8: Register shutdown and print ready (per D-01 final step)
+  // Step 7: Register shutdown and print ready (per D-01 final step)
+  // AgentManager handles its own cleanup from within Electron main process.
   registerShutdownHandlers({
     devServer: { pid: devServer.pid! },
-    claudeSession: claude,
     electronProcess: { pid: electronProcess.pid! },
   });
 
