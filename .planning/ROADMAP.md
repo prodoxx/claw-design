@@ -80,12 +80,13 @@ Plans:
   2. Claude Code edits source files based on the visual context and instruction, and HMR reflects the changes in the Electron window
   3. Status feedback shows the current state throughout the process (capturing, sending to Claude, Claude editing, changes applied)
   4. When Claude Code encounters an error, a clear message is shown in the overlay with an option to retry
-**Plans**: TBD
+**Plans**: 3 plans
+**UI hint**: yes
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
-- [ ] 04-03: TBD
+- [ ] 04-01-PLAN.md -- Prompt assembly module and AgentManager (concurrency, status tracking, error handling)
+- [ ] 04-02-PLAN.md -- Sidebar WebContentsView renderer, styles, preload, and state machine
+- [ ] 04-03-PLAN.md -- Wire submit pipeline to AgentManager, sidebar IPC, retry/prefill flow, visual verification
 
 ### Phase 5: Polish & Distribution
 **Goal**: User can install claw-design globally via npm and use it as a polished, shippable tool with responsive viewport switching
