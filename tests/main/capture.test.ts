@@ -77,13 +77,7 @@ describe('captureRegion', () => {
     } as never;
   }
 
-  it('uses screen.getPrimaryDisplay().scaleFactor', async () => {
-    const siteView = createMockSiteView(2);
-    await captureRegion(siteView, { x: 10, y: 20, width: 100, height: 50 });
-    expect(screen.getPrimaryDisplay).toHaveBeenCalled();
-  });
-
-  it('passes rect unchanged to capturePage at scaleFactor 1', async () => {
+  it('passes CSS rect directly to capturePage (DIP coordinates)', async () => {
     const siteView = createMockSiteView(1);
     await captureRegion(siteView, { x: 10, y: 20, width: 100, height: 50 });
     expect(mockCapturePage).toHaveBeenCalledWith({
@@ -94,25 +88,26 @@ describe('captureRegion', () => {
     });
   });
 
-  it('doubles rect values for capturePage at scaleFactor 2', async () => {
+  it('does not scale by display factor (capturePage takes DIP)', async () => {
     const siteView = createMockSiteView(2);
     await captureRegion(siteView, { x: 10, y: 20, width: 100, height: 50 });
+    // Should NOT double — capturePage expects CSS/DIP pixels
     expect(mockCapturePage).toHaveBeenCalledWith({
-      x: 20,
-      y: 40,
-      width: 200,
-      height: 100,
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 50,
     });
   });
 
-  it('applies fractional scale at scaleFactor 1.5', async () => {
-    const siteView = createMockSiteView(1.5);
-    await captureRegion(siteView, { x: 10, y: 10, width: 100, height: 100 });
+  it('clamps negative values and enforces minimum 1x1 size', async () => {
+    const siteView = createMockSiteView(1);
+    await captureRegion(siteView, { x: -5, y: -10, width: 0, height: 0 });
     expect(mockCapturePage).toHaveBeenCalledWith({
-      x: 15,
-      y: 15,
-      width: 150,
-      height: 150,
+      x: 0,
+      y: 0,
+      width: 1,
+      height: 1,
     });
   });
 

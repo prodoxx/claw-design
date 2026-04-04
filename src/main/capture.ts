@@ -24,9 +24,8 @@ export function computeDeviceRect(cssRect: CSSRect, scaleFactor: number): CSSRec
 /**
  * Capture a region of the site view as a PNG buffer.
  *
- * Per CAP-03: applies display scaleFactor to CSS pixel coordinates
- * before calling capturePage(). capturePage() returns a NativeImage
- * at device pixel resolution.
+ * capturePage() takes DIP (CSS pixel) coordinates and returns a
+ * NativeImage at device pixel resolution automatically.
  *
  * Per CLAUDE.md Key Decision #3: returns PNG buffer, not file path.
  */
@@ -34,9 +33,14 @@ export async function captureRegion(
   siteView: WebContentsView,
   cssRect: CSSRect,
 ): Promise<Buffer> {
-  const scaleFactor = screen.getPrimaryDisplay().scaleFactor;
-  const deviceRect = computeDeviceRect(cssRect, scaleFactor);
+  // Clamp to non-negative and ensure minimum 1x1 size
+  const rect = {
+    x: Math.max(0, Math.round(cssRect.x)),
+    y: Math.max(0, Math.round(cssRect.y)),
+    width: Math.max(1, Math.round(cssRect.width)),
+    height: Math.max(1, Math.round(cssRect.height)),
+  };
 
-  const image = await siteView.webContents.capturePage(deviceRect);
+  const image = await siteView.webContents.capturePage(rect);
   return image.toPNG();
 }
