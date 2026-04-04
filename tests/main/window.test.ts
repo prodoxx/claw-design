@@ -305,7 +305,7 @@ describe('sidebarView', () => {
     });
   });
 
-  it('setSidebarState("expanded") sets sidebar bounds and shrinks site view', () => {
+  it('setSidebarState("expanded") sets floating sidebar bounds without shrinking site', () => {
     const components = createMainWindow('http://localhost:3000', 'my-app', 3000);
     const sidebarView = mockWebContentsViewInstances[2];
     const siteView = mockWebContentsViewInstances[0];
@@ -315,45 +315,32 @@ describe('sidebarView', () => {
     components.setSidebarState('expanded');
 
     expect(components.getSidebarState()).toBe('expanded');
-    // Sidebar should be positioned at right edge
+    // Sidebar should float as overlay (not full height, with margin)
     expect(sidebarView.setBounds).toHaveBeenCalledWith({
-      x: 1280 - 296,
-      y: 0,
-      width: 296,
-      height: 800,
+      x: 1280 - 300 - 16,
+      y: 16,
+      width: 300,
+      height: Math.min(480, 800 - 32),
     });
-    // Site view should be narrowed
-    expect(siteView.setBounds).toHaveBeenCalledWith(
-      expect.objectContaining({
-        x: 0,
-        y: 0,
-        width: 1280 - 280,
-        height: 800,
-      }),
-    );
+    // Site view should NOT be narrowed (floating overlay)
+    expect(siteView.setBounds).not.toHaveBeenCalled();
   });
 
-  it('setSidebarState("hidden") from expanded restores site view to full width', () => {
+  it('setSidebarState("hidden") from expanded zeroes sidebar bounds', () => {
     const components = createMainWindow('http://localhost:3000', 'my-app', 3000);
-    const siteView = mockWebContentsViewInstances[0];
+    const sidebarView = mockWebContentsViewInstances[2];
 
     // First expand
     components.setSidebarState('expanded');
-    siteView.setBounds.mockClear();
+    sidebarView.setBounds.mockClear();
 
     // Then hide
     components.setSidebarState('hidden');
 
     expect(components.getSidebarState()).toBe('hidden');
-    // syncBounds should restore site view to full width
-    expect(siteView.setBounds).toHaveBeenCalledWith(
-      expect.objectContaining({
-        x: 0,
-        y: 0,
-        width: 1280,
-        height: 800,
-      }),
-    );
+    expect(sidebarView.setBounds).toHaveBeenCalledWith({
+      x: 0, y: 0, width: 0, height: 0,
+    });
   });
 
   it('syncBounds repositions sidebar on resize', () => {

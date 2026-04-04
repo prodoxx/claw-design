@@ -8,6 +8,7 @@ const sidebarAPI = {
       instruction: string;
       status: string;
       error?: string;
+      activity?: string;
     }) => void,
   ): void => {
     ipcRenderer.on('sidebar:task-update', (_event, data) => callback(data));
@@ -26,6 +27,10 @@ const sidebarAPI = {
   /** Retry an errored task */
   retryTask: (id: string): Promise<void> =>
     ipcRenderer.invoke('sidebar:task-retry', { id }),
+
+  /** Get logs for a specific task */
+  getTaskLogs: (id: string): Promise<Array<{ timestamp: number; type: string; content: string }>> =>
+    ipcRenderer.invoke('sidebar:task-logs', { id }),
 };
 
 contextBridge.exposeInMainWorld('clawSidebar', sidebarAPI);

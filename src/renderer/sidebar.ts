@@ -14,6 +14,12 @@ import {
 // Type declaration for sidebar preload API
 // ============================================================
 
+interface TaskLogEntry {
+  timestamp: number;
+  type: string;
+  content: string;
+}
+
 declare global {
   interface Window {
     clawSidebar: {
@@ -22,6 +28,7 @@ declare global {
       collapse: () => Promise<void>;
       dismissTask: (id: string) => Promise<void>;
       retryTask: (id: string) => Promise<void>;
+      getTaskLogs: (id: string) => Promise<TaskLogEntry[]>;
     };
   }
 }
@@ -32,6 +39,7 @@ declare global {
 
 let state: SidebarState = { ...INITIAL_SIDEBAR_STATE, tasks: new Map() };
 let autoExpandTimer: ReturnType<typeof setTimeout> | null = null;
+const expandedLogs = new Set<string>(); // task IDs with visible log panels
 
 // Status badge label copy (per copywriting contract)
 const STATUS_LABELS: Record<TaskUpdate['status'], string> = {
@@ -107,12 +115,20 @@ function createTaskRow(task: TaskUpdate): HTMLElement {
     `${task.instruction}, status: ${task.status}`,
   );
 
-  // Instruction text
+  // Instruction text (clickable to toggle logs)
   const instructionEl = document.createElement('div');
   instructionEl.className =
     task.status === 'error' ? 'task-instruction error-row' : 'task-instruction';
   instructionEl.textContent = task.instruction;
+  instructionEl.addEventListener('click', () => toggleLogs(task.id, row));
   row.appendChild(instructionEl);
+
+  // Activity text (streaming what Claude is doing)
+  const activityEl = document.createElement('div');
+  activityEl.className = 'task-activity';
+  activityEl.textContent = task.activity ?? '';
+  activityEl.style.display = task.activity ? '' : 'none';
+  row.appendChild(activityEl);
 
   // Status row (badge + dismiss icon)
   const statusRow = document.createElement('div');
@@ -154,6 +170,13 @@ function updateTaskRow(row: HTMLElement, task: TaskUpdate): void {
         : 'task-instruction';
   }
 
+  // Update activity text
+  const activityEl = row.querySelector('.task-activity') as HTMLElement | null;
+  if (activityEl) {
+    activityEl.textContent = task.activity ?? '';
+    activityEl.style.display = task.activity ? '' : 'none';
+  }
+
   // Update status badge
   const badge = row.querySelector('.status-badge');
   if (badge) {
@@ -182,6 +205,11 @@ function updateTaskRow(row: HTMLElement, task: TaskUpdate): void {
   // Add error elements
   if (task.status === 'error') {
     appendErrorElements(row, task);
+  }
+
+  // If logs are expanded for this task, refresh them
+  if (expandedLogs.has(task.id)) {
+    refreshLogs(task.id, row);
   }
 }
 
@@ -229,6 +257,61 @@ function appendErrorElements(row: HTMLElement, task: TaskUpdate): void {
   buttonRow.appendChild(dismissBtn);
 
   row.appendChild(buttonRow);
+}
+
+/**
+ * Toggle log view for a task.
+ */
+async function toggleLogs(taskId: string, row: HTMLElement): Promise<void> {
+  const existing = row.querySelector('.task-logs');
+  if (existing) {
+    existing.remove();
+    expandedLogs.delete(taskId);
+    return;
+  }
+
+  expandedLogs.add(taskId);
+  await refreshLogs(taskId, row);
+}
+
+/**
+ * Fetch and render logs for a task.
+ */
+async function refreshLogs(taskId: string, row: HTMLElement): Promise<void> {
+  const logs = await window.clawSidebar.getTaskLogs(taskId);
+
+  // Remove existing log panel if any
+  const existing = row.querySelector('.task-logs');
+  if (existing) existing.remove();
+
+  if (logs.length === 0) {
+    const logsEl = document.createElement('div');
+    logsEl.className = 'task-logs';
+    logsEl.textContent = 'No logs yet...';
+    // Insert after activity or instruction
+    const activityEl = row.querySelector('.task-activity');
+    const insertAfter = activityEl ?? row.querySelector('.task-instruction');
+    insertAfter?.after(logsEl);
+    return;
+  }
+
+  const logsEl = document.createElement('div');
+  logsEl.className = 'task-logs';
+
+  for (const entry of logs) {
+    const line = document.createElement('div');
+    line.className = `task-log-entry log-${entry.type}`;
+    line.textContent = entry.content;
+    logsEl.appendChild(line);
+  }
+
+  // Insert after activity or instruction
+  const activityEl = row.querySelector('.task-activity');
+  const insertAfter = activityEl ?? row.querySelector('.task-instruction');
+  insertAfter?.after(logsEl);
+
+  // Scroll to bottom
+  logsEl.scrollTop = logsEl.scrollHeight;
 }
 
 /**

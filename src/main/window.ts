@@ -94,6 +94,10 @@ export function createMainWindow(
 
   function applySidebarBounds(): void {
     const { width, height } = win.getContentBounds();
+    const SIDEBAR_WIDTH = 300;
+    const SIDEBAR_MAX_HEIGHT = 480;
+    const MARGIN = 16;
+
     switch (sidebarState) {
       case 'hidden':
         sidebarView.setBounds({ x: 0, y: 0, width: 0, height: 0 });
@@ -106,36 +110,32 @@ export function createMainWindow(
           height: 80,
         });
         break;
-      case 'expanded':
-        sidebarView.setBounds({ x: width - 296, y: 0, width: 296, height });
-        // Adjust site view width when sidebar expanded
-        siteView.setBounds({ x: 0, y: 0, width: width - 280, height });
-        // Adjust overlay bounds too if active
-        if (overlayIsActive) {
-          overlayView.setBounds({ x: 0, y: 0, width: width - 280, height });
-        }
+      case 'expanded': {
+        // Floating overlay: doesn't shrink site or overlay views
+        const panelHeight = Math.min(SIDEBAR_MAX_HEIGHT, height - MARGIN * 2);
+        sidebarView.setBounds({
+          x: width - SIDEBAR_WIDTH - MARGIN,
+          y: MARGIN,
+          width: SIDEBAR_WIDTH,
+          height: panelHeight,
+        });
         break;
+      }
     }
   }
 
   function setSidebarState(state: 'hidden' | 'minimized' | 'expanded'): void {
-    const prevState = sidebarState;
     sidebarState = state;
     applySidebarBounds();
-    // If collapsing from expanded, restore site/overlay to full width
-    if (prevState === 'expanded' && state !== 'expanded') {
-      syncBounds();
-    }
   }
 
   // D-13: Auto-sync all views to window content area on resize
+  // Sidebar floats on top — site and overlay always use full width
   function syncBounds(): void {
     const { width, height } = win.getContentBounds();
-    const effectiveWidth = sidebarState === 'expanded' ? width - 280 : width;
-    siteView.setBounds({ x: 0, y: 0, width: effectiveWidth, height });
-    // Preserve overlay state across resizes
+    siteView.setBounds({ x: 0, y: 0, width, height });
     if (overlayIsActive) {
-      overlayView.setBounds({ x: 0, y: 0, width: effectiveWidth, height });
+      overlayView.setBounds({ x: 0, y: 0, width, height });
     } else {
       setOverlayInactive(overlayView, win);
     }

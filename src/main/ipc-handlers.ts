@@ -135,6 +135,11 @@ export function registerIpcHandlers(
     }
   });
 
+  // Sidebar task logs (renderer -> main)
+  ipcMain.handle('sidebar:task-logs', async (_event, data: { id: string }) => {
+    return agentManager.getTaskLogs(data.id);
+  });
+
   // Sidebar task retry (renderer -> main) -- per D-19
   ipcMain.handle('sidebar:task-retry', async (_event, data: { id: string }) => {
     const task = agentManager.getTask(data.id);

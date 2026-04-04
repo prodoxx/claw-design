@@ -15,6 +15,7 @@ export interface TaskUpdate {
   instruction: string;
   status: 'queued' | 'sending' | 'editing' | 'done' | 'error';
   error?: string;
+  activity?: string;
 }
 
 export type SidebarEvent =

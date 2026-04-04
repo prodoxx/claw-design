@@ -21,11 +21,20 @@ export interface TaskUpdate {
   instruction: string;
   status: TaskStatus;
   error?: string;
+  activity?: string;
+}
+
+export interface TaskLogEntry {
+  timestamp: number;
+  type: 'tool' | 'text' | 'status';
+  content: string;
 }
 
 interface InternalTask extends Task {
   abortController?: AbortController;
   queryRef?: { close: () => void };
+  activity?: string;
+  logs: TaskLogEntry[];
 }
 
 /**
@@ -46,6 +55,38 @@ function humanReadableError(errors: string[]): string {
     return 'Claude server error. Retry in a moment.';
   }
   return 'Something went wrong. Retry or dismiss to continue.';
+}
+
+/**
+ * Describe a tool use in a short, human-readable string.
+ */
+function describeToolUse(
+  toolName: string,
+  input?: Record<string, unknown>,
+): string {
+  const filePath = input?.file_path as string | undefined;
+  const short = filePath
+    ? filePath.replace(/^.*\//, '') // basename only
+    : undefined;
+
+  switch (toolName) {
+    case 'Read':
+      return short ? `Reading ${short}` : 'Reading file...';
+    case 'Write':
+      return short ? `Writing ${short}` : 'Writing file...';
+    case 'Edit':
+      return short ? `Editing ${short}` : 'Editing file...';
+    case 'Glob':
+      return 'Searching for files...';
+    case 'Grep':
+      return 'Searching code...';
+    case 'Bash': {
+      const cmd = input?.command as string | undefined;
+      return cmd ? `Running: ${cmd.slice(0, 60)}` : 'Running command...';
+    }
+    default:
+      return `Using ${toolName}...`;
+  }
 }
 
 /**
@@ -92,6 +133,7 @@ export class AgentManager {
       screenshot: input.screenshot,
       dom: input.dom,
       bounds: input.bounds,
+      logs: [],
     };
     this.tasks.set(id, task);
     this.emitUpdate(task);
@@ -239,25 +281,40 @@ export class AgentManager {
 
     try {
       for await (const message of q as AsyncIterable<SDKMessage>) {
-        // Per Pitfall 3: only react to init and result messages
         const msg = message as Record<string, unknown>;
 
         if (msg.type === 'system' && msg.subtype === 'init') {
           task.status = 'editing';
+          this.addLog(task, 'status', 'Claude connected, starting edits...');
           this.emitUpdate(task);
+        } else if (msg.type === 'assistant') {
+          // Extract tool use info for activity streaming
+          this.extractActivity(task, msg);
+        } else if (msg.type === 'tool_use_summary') {
+          // Human-readable summary of what a tool did
+          const summary = (msg as Record<string, unknown>).summary as string;
+          if (summary) {
+            task.activity = summary;
+            this.addLog(task, 'text', summary);
+            this.emitUpdate(task);
+          }
         } else if (msg.type === 'result') {
           if (msg.subtype === 'success') {
             task.status = 'done';
+            task.activity = undefined;
+            this.addLog(task, 'status', 'Completed');
             this.emitUpdate(task);
           } else {
             // Error result
             const errors = (msg.errors as string[]) || [];
             task.status = 'error';
             task.error = humanReadableError(errors);
+            task.activity = undefined;
+            this.addLog(task, 'status', `Error: ${task.error}`);
             this.emitUpdate(task);
           }
         }
-        // All other message types are intentionally ignored
+        // Other message types (tool_progress, etc.) intentionally ignored for IPC perf
       }
     } catch (err: unknown) {
       // Aborted queries throw; only set error if not already done
@@ -280,6 +337,47 @@ export class AgentManager {
     }
   }
 
+  /**
+   * Extract activity text from assistant messages containing tool_use blocks.
+   */
+  private extractActivity(
+    task: InternalTask,
+    msg: Record<string, unknown>,
+  ): void {
+    const assistantMsg = msg.message as
+      | { content?: Array<Record<string, unknown>> }
+      | undefined;
+    if (!assistantMsg?.content) return;
+
+    for (const block of assistantMsg.content) {
+      if (block.type === 'tool_use') {
+        const toolName = block.name as string;
+        const input = block.input as Record<string, unknown> | undefined;
+        const activity = describeToolUse(toolName, input);
+        task.activity = activity;
+        this.addLog(task, 'tool', activity);
+        this.emitUpdate(task);
+      } else if (block.type === 'text' && typeof block.text === 'string') {
+        // Capture Claude's text responses in logs (not as activity)
+        const text = (block.text as string).slice(0, 500);
+        if (text.trim()) {
+          this.addLog(task, 'text', text);
+        }
+      }
+    }
+  }
+
+  private addLog(task: InternalTask, type: TaskLogEntry['type'], content: string): void {
+    task.logs.push({ timestamp: Date.now(), type, content });
+  }
+
+  /**
+   * Get logs for a task by ID.
+   */
+  getTaskLogs(id: string): TaskLogEntry[] {
+    return this.tasks.get(id)?.logs ?? [];
+  }
+
   private emitUpdate(task: InternalTask): void {
     if (!this.onTaskUpdate) return;
     this.onTaskUpdate({
@@ -287,6 +385,7 @@ export class AgentManager {
       instruction: task.instruction,
       status: task.status,
       error: task.error,
+      activity: task.activity,
     });
   }
 }
