@@ -566,7 +566,7 @@ if (isInBrowser()) {
 
   // Listen for overlay mode changes from main process
   if (window.claw?.onModeChange) {
-    window.claw.onModeChange((mode) => {
+    window.claw.onModeChange((mode: string) => {
       console.debug('[claw-overlay] mode:', mode);
     });
   }
@@ -574,7 +574,7 @@ if (isInBrowser()) {
   // Wire prefill for retry (D-19): when retry is clicked in sidebar,
   // the overlay receives the original instruction to pre-populate the textarea.
   if (window.claw?.onPrefillInstruction) {
-    window.claw.onPrefillInstruction((data) => {
+    window.claw.onPrefillInstruction((data: { instruction: string }) => {
       const ta = document.getElementById('claw-input-textarea') as HTMLTextAreaElement;
       if (ta) {
         ta.value = data.instruction;
