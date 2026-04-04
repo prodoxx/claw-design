@@ -33,12 +33,14 @@ Declared values (must be multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| xs | 4px | Icon gaps, badge internal padding, status dot margin |
+| xs | 4px | Icon gaps, badge internal vertical padding, status dot margin |
 | sm | 8px | Task row vertical padding, gap between status badge and text |
-| md | 12px | Sidebar internal horizontal padding, gap between task rows |
+| md | 16px | Sidebar internal horizontal padding, gap between task rows, button row gap |
 | lg | 16px | Sidebar top/bottom padding, icon button padding |
 | xl | 24px | Not used in this phase |
 | 2xl | 32px | Not used in this phase |
+
+Note: `md` and `lg` share the same value (16px) in this phase. They are kept as separate tokens for semantic clarity -- `md` is used for horizontal rhythm and inter-element gaps, while `lg` is used for container edge padding and large touch targets.
 
 Exceptions:
 - Sidebar toggle icon: 36x36px (matches toolbar button size from Phase 2)
@@ -55,8 +57,10 @@ Exceptions:
 | Task instruction text | 13px | 400 (regular) | 1.38 | Truncated instruction preview in task row |
 | Status badge label | 11px | 600 (semibold) | 1.0 | "Sending", "Editing", "Done", "Error" badge text |
 | Badge counter | 12px | 600 (semibold) | 1.0 | Minimized badge "3/5" text |
-| Section label | 11px | 500 (medium) | 1.36 | Sidebar header, dismiss/retry button labels |
+| Section label | 11px | 400 (regular) | 1.36 | Sidebar header, dismiss/retry button labels |
 | Error message | 12px | 400 (regular) | 1.5 | Inline error description below task row |
+
+**Weight rationale:** Two weights only. 400 (regular) is the default for all body text, labels, and button text. 600 (semibold) is the emphasis weight, reserved for status badges and the minimized counter -- elements that must be glanceable at small sizes.
 
 **Font rendering:** Use `-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale` on all sidebar text. Matches Phase 3 overlay convention.
 
@@ -165,7 +169,7 @@ The `syncBounds()` function in `window.ts` is extended to also reposition the si
 | Icon container | 36x36px, `rgba(10, 10, 10, 0.88)` background, `border-radius: 12px` |
 | Icon | Inline SVG chevron pointing left (14x14px), `rgba(255, 255, 255, 0.55)` |
 | Icon hover | Icon color `#ffffff`, background `rgba(255, 255, 255, 0.15)` |
-| Badge | Below icon, `rgba(10, 10, 10, 0.88)` background, `border-radius: 8px`, padding `2px 8px` |
+| Badge | Below icon, `rgba(10, 10, 10, 0.88)` background, `border-radius: 8px`, padding `4px 8px` |
 | Badge text | "3/5" format (completed/total), 12px semibold, `rgba(138, 180, 248, 1)` |
 
 **Behavior:**
@@ -196,13 +200,13 @@ The `syncBounds()` function in `window.ts` is extended to also reposition the si
 
 | Property | Value |
 |----------|-------|
-| Width | 280px (plus 16px total horizontal padding inside = 264px content width) |
+| Width | 280px (plus 16px horizontal padding each side = 248px content width) |
 | Height | Full window height |
 | Background | `rgba(10, 10, 10, 0.88)` |
 | Border-left | `1px solid rgba(255, 255, 255, 0.08)` |
 | Border-radius | `0` (flush with window edge, no rounded corners on full-height panel) |
-| Header | "Tasks" label (11px, medium, `rgba(255, 255, 255, 0.5)`) + minimize button (top-right) |
-| Header padding | `16px 12px 8px 12px` |
+| Header | "Tasks" label (11px, regular, `rgba(255, 255, 255, 0.5)`) + minimize button (top-right) |
+| Header padding | `16px 16px 8px 16px` |
 | Minimize button | 28x28px, `rgba(255, 255, 255, 0.4)` icon, hover `rgba(255, 255, 255, 0.7)` |
 | Task list | Scrollable if overflow, `overflow-y: auto`, scrollbar hidden (overlay context) |
 | Shadow | `0 0 24px rgba(0, 0, 0, 0.4)` on the left edge (depth cue over site content) |
@@ -239,12 +243,12 @@ Each task in the sidebar is a row with consistent structure.
 
 | Property | Value |
 |----------|-------|
-| Container padding | `8px 12px` |
+| Container padding | `8px 16px` |
 | Container margin-bottom | `4px` |
 | Container background | `transparent` (no per-row background) |
 | Container border-bottom | `1px solid rgba(255, 255, 255, 0.06)` (subtle separator) |
 | Instruction text | 13px, regular, `rgba(255, 255, 255, 0.8)`, max 2 lines, `text-overflow: ellipsis` with `-webkit-line-clamp: 2` |
-| Status badge | Inline pill, 11px semibold, `border-radius: 6px`, padding `2px 8px` |
+| Status badge | Inline pill, 11px semibold, `border-radius: 6px`, padding `4px 8px` |
 | Dismiss button | "x" icon, 20x20px, appears on hover of task row (Done/Error states only) |
 
 ### Task Row States
@@ -273,9 +277,9 @@ Each task in the sidebar is a row with consistent structure.
 |----------|-------|
 | Error message | 12px, regular, `rgba(248, 150, 138, 0.9)`, max 3 lines, below status badge |
 | Error message margin-top | 4px |
-| Retry button | Text button, "Retry", 11px medium, `rgba(138, 180, 248, 0.8)`, hover `rgba(138, 180, 248, 1)` |
-| Dismiss button | Text button, "Dismiss", 11px medium, `rgba(255, 255, 255, 0.4)`, hover `rgba(255, 255, 255, 0.7)` |
-| Button row | flex, gap 12px, margin-top 8px |
+| Retry button | Text button, "Retry", 11px regular, `rgba(138, 180, 248, 0.8)`, hover `rgba(138, 180, 248, 1)` |
+| Dismiss button | Text button, "Dismiss", 11px regular, `rgba(255, 255, 255, 0.4)`, hover `rgba(255, 255, 255, 0.7)` |
+| Button row | flex, gap 16px, margin-top 8px |
 
 ---
 
