@@ -73,4 +73,31 @@ export function registerIpcHandlers(components: WindowComponents): void {
       return result;
     },
   );
+
+  // Submit instruction with screenshot + DOM context (INST-02)
+  // Phase 3 stores it; Phase 4 sends to Claude Code
+  ipcMain.handle(
+    'overlay:submit-instruction',
+    async (
+      _event,
+      data: {
+        instruction: string;
+        screenshot: Buffer;
+        dom: DomExtractionResult;
+        bounds: CSSRect;
+      },
+    ) => {
+      // Phase 4 will implement the Claude Code integration here.
+      // For now, log the submission so we can verify the pipeline works end-to-end.
+      console.log('[claw] Instruction submitted:', {
+        instruction: data.instruction,
+        screenshotSize: data.screenshot?.length ?? 0,
+        domElements: data.dom?.elements?.length ?? 0,
+        bounds: data.bounds,
+      });
+      // Shrink overlay back to inactive
+      setOverlayInactive(components.overlayView, components.window);
+      components.overlayView.webContents.send('overlay:mode-change', 'inactive');
+    },
+  );
 }

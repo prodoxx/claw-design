@@ -32,6 +32,43 @@ const overlayAPI = {
       callback(bounds),
     );
   },
+
+  /** Capture screenshot of selected region as PNG buffer (Plan 03-02) */
+  captureScreenshot: (bounds: { x: number; y: number; width: number; height: number }): Promise<Buffer> =>
+    ipcRenderer.invoke('overlay:capture-screenshot', bounds),
+
+  /** Extract DOM elements within selected region (Plan 03-02) */
+  extractDom: (bounds: { x: number; y: number; width: number; height: number }): Promise<{
+    elements: Array<{
+      tag: string;
+      id?: string;
+      classes: string[];
+      text?: string;
+      bounds: { x: number; y: number; width: number; height: number };
+      path: string;
+    }>;
+    viewport: { width: number; height: number };
+  }> =>
+    ipcRenderer.invoke('overlay:extract-dom', bounds),
+
+  /** Submit instruction with screenshot + DOM context to main process (Plan 03-03) */
+  submitInstruction: (data: {
+    instruction: string;
+    screenshot: Buffer;
+    dom: {
+      elements: Array<{
+        tag: string;
+        id?: string;
+        classes: string[];
+        text?: string;
+        bounds: { x: number; y: number; width: number; height: number };
+        path: string;
+      }>;
+      viewport: { width: number; height: number };
+    };
+    bounds: { x: number; y: number; width: number; height: number };
+  }): Promise<void> =>
+    ipcRenderer.invoke('overlay:submit-instruction', data),
 };
 
 contextBridge.exposeInMainWorld('claw', overlayAPI);

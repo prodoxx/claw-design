@@ -327,6 +327,7 @@ if (isInBrowser()) {
     selectBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (state.mode === 'inactive' || state.mode === 'elem-idle' || state.mode === 'elem-hovering' || state.mode === 'elem-committed') {
+        hideInputBar();
         dispatch({ type: 'ACTIVATE_RECT' });
         window.claw?.activateSelection();
       } else if (
@@ -334,6 +335,7 @@ if (isInBrowser()) {
         state.mode === 'rect-drawing' ||
         state.mode === 'rect-committed'
       ) {
+        hideInputBar();
         dispatch({ type: 'CANCEL' });
         window.claw?.deactivateSelection();
       }
@@ -346,6 +348,7 @@ if (isInBrowser()) {
     elemBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (state.mode === 'inactive' || state.mode === 'rect-idle' || state.mode === 'rect-drawing' || state.mode === 'rect-committed') {
+        hideInputBar();
         dispatch({ type: 'ACTIVATE_ELEM' });
         window.claw?.activateSelection();
       } else if (
@@ -353,6 +356,7 @@ if (isInBrowser()) {
         state.mode === 'elem-hovering' ||
         state.mode === 'elem-committed'
       ) {
+        hideInputBar();
         dispatch({ type: 'CANCEL' });
         window.claw?.deactivateSelection();
       }
@@ -404,13 +408,147 @@ if (isInBrowser()) {
     }
   });
 
-  // Escape key cancels selection
+  // Escape key cancels selection and hides input bar
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && state.mode !== 'inactive') {
+      hideInputBar();
       dispatch({ type: 'CANCEL' });
       window.claw?.deactivateSelection();
     }
   });
+
+  // ============================================================
+  // Input bar: smart positioning, show/hide, auto-expand, submit
+  // ============================================================
+
+  function positionInputBar(bounds: SelectionBounds): void {
+    const inputBar = document.getElementById('claw-input-bar')!;
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const MIN_EDGE_MARGIN = 16;
+    const SPACE_THRESHOLD = 80;
+    const INPUT_GAP = 8;
+
+    // Width: match selection width, clamped to [240, 480]
+    const barWidth = Math.max(240, Math.min(480, bounds.width));
+    inputBar.style.width = `${barWidth}px`;
+
+    // Horizontal: align to selection left, clamp to viewport
+    let left = bounds.x;
+    if (left + barWidth > viewportWidth - MIN_EDGE_MARGIN) {
+      left = viewportWidth - MIN_EDGE_MARGIN - barWidth;
+    }
+    if (left < MIN_EDGE_MARGIN) left = MIN_EDGE_MARGIN;
+    inputBar.style.left = `${left}px`;
+
+    // Vertical: prefer below selection, fall back to above
+    const spaceBelow = viewportHeight - (bounds.y + bounds.height);
+    const spaceAbove = bounds.y;
+
+    if (spaceBelow >= SPACE_THRESHOLD) {
+      inputBar.style.top = `${bounds.y + bounds.height + INPUT_GAP}px`;
+      inputBar.style.bottom = '';
+    } else if (spaceAbove >= SPACE_THRESHOLD) {
+      inputBar.style.top = '';
+      inputBar.style.bottom = `${viewportHeight - bounds.y + INPUT_GAP}px`;
+    } else {
+      // Neither has enough space -- put below anyway
+      inputBar.style.top = `${bounds.y + bounds.height + INPUT_GAP}px`;
+      inputBar.style.bottom = '';
+    }
+  }
+
+  function showInputBar(bounds: SelectionBounds): void {
+    const inputBar = document.getElementById('claw-input-bar')!;
+    const textarea = document.getElementById('claw-input-textarea') as HTMLTextAreaElement;
+
+    inputBar.hidden = false;
+    positionInputBar(bounds);
+
+    // Trigger entrance animation (per UI spec: opacity 0->1, translateY 4px->0, 150ms ease-out)
+    requestAnimationFrame(() => {
+      inputBar.classList.add('claw-input-bar--visible');
+    });
+
+    // Focus textarea (per accessibility contract)
+    textarea.value = '';
+    textarea.style.height = 'auto';
+    textarea.focus();
+  }
+
+  function hideInputBar(): void {
+    const inputBar = document.getElementById('claw-input-bar')!;
+    inputBar.classList.remove('claw-input-bar--visible');
+    // Wait for exit animation (100ms ease-in per UI spec), then hide
+    setTimeout(() => {
+      inputBar.hidden = true;
+    }, 100);
+  }
+
+  // Auto-expanding textarea (per D-10)
+  const textarea = document.getElementById('claw-input-textarea') as HTMLTextAreaElement;
+  const submitBtn = document.getElementById('claw-input-submit')!;
+
+  textarea.addEventListener('input', () => {
+    // Auto-expand: reset height, set to scrollHeight, cap at max
+    textarea.style.height = 'auto';
+    const newHeight = Math.min(textarea.scrollHeight, 160);
+    textarea.style.height = `${newHeight}px`;
+
+    // Enable/disable submit button
+    if (textarea.value.trim()) {
+      submitBtn.classList.add('claw-input-bar__submit--enabled');
+      submitBtn.removeAttribute('disabled');
+    } else {
+      submitBtn.classList.remove('claw-input-bar__submit--enabled');
+      submitBtn.setAttribute('disabled', '');
+    }
+  });
+
+  // Keyboard handling (per D-11): Enter submits, Shift+Enter adds newline
+  textarea.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+    // Shift+Enter: default textarea behavior (newline) -- no preventDefault
+  });
+
+  // Submit handler
+  async function handleSubmit(): Promise<void> {
+    const instruction = textarea.value.trim();
+    if (!instruction || !state.selectionBounds) return;
+
+    const bounds = state.selectionBounds;
+
+    // Capture screenshot and extract DOM in parallel (per Plan 02 IPC handlers)
+    const [screenshot, dom] = await Promise.all([
+      window.claw.captureScreenshot(bounds),
+      window.claw.extractDom(bounds),
+    ]);
+
+    // Submit instruction with all context to main process
+    await window.claw.submitInstruction({
+      instruction,
+      screenshot,
+      dom,
+      bounds,
+    });
+
+    // Per D-12: after submit, selection and input disappear, return to inactive
+    hideInputBar();
+    // Dispatch CANCEL to clear selection state
+    dispatch({ type: 'CANCEL' });
+    // Deactivate overlay (shrink bounds) per D-12
+    await window.claw.deactivateSelection();
+  }
+
+  submitBtn.addEventListener('click', handleSubmit);
+
+  // Wire selection-committed listener: show input bar after selection committed
+  document.addEventListener('claw:selection-committed', ((e: CustomEvent) => {
+    showInputBar(e.detail.bounds);
+  }) as EventListener);
 
   // Listen for overlay mode changes from main process
   if (window.claw?.onModeChange) {
