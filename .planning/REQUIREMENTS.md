@@ -31,9 +31,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Capture
 
-- [ ] **CAP-01**: Screenshot of the selected region is captured as an image
-- [ ] **CAP-02**: DOM elements within the selected region are extracted (structure, classes, IDs, text content, hierarchy)
-- [ ] **CAP-03**: Screenshot coordinates are DPI-aware (correct on Retina/HiDPI displays)
+- [x] **CAP-01**: Screenshot of the selected region is captured as an image
+- [x] **CAP-02**: DOM elements within the selected region are extracted (structure, classes, IDs, text content, hierarchy)
+- [x] **CAP-03**: Screenshot coordinates are DPI-aware (correct on Retina/HiDPI displays)
 
 ### Instruction
 
@@ -129,9 +129,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEL-02 | Phase 3 | Complete |
 | SEL-03 | Phase 3 | Complete |
 | SEL-04 | Phase 3 | Complete |
-| CAP-01 | Phase 3 | Pending |
-| CAP-02 | Phase 3 | Pending |
-| CAP-03 | Phase 3 | Pending |
+| CAP-01 | Phase 3 | Complete |
+| CAP-02 | Phase 3 | Complete |
+| CAP-03 | Phase 3 | Complete |
 | INST-01 | Phase 3 | Pending |
 | INST-02 | Phase 3 | Pending |
 | INST-03 | Phase 3 | Pending |

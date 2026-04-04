@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-04-04T04:49:34.068Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-04-04T04:58:28.125Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-03)
 ## Current Position
 
 Phase: 03 (selection-overlay-capture) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -57,6 +57,7 @@ Progress: [..........] 0%
 | Phase 02-electron-shell P01 | 2min | 2 tasks | 7 files |
 | Phase 02 P02 | 3min | 2 tasks | 6 files |
 | Phase 03 P01 | 9min | 2 tasks | 6 files |
+| Phase 03 P02 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Environment variables (CLAW_URL, CLAW_PROJECT_NAME) for CLI-to-Electron handshake
 - [Phase 03]: Pure state machine pattern: export transition() separately from DOM wiring with isInBrowser() guard for testability
 - [Phase 03]: requestAnimationFrame throttling for IPC-heavy element hover detection (prevents flooding main process)
+- [Phase 03]: computeDeviceRect extracted as pure function for testable DPI math without Electron mocks
+- [Phase 03]: DOM extraction script uses var/function syntax (not const/let/arrow) for max site JS engine compatibility, wrapped in IIFE to prevent scope leaks
 
 ### Pending Todos
 
@@ -90,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T04:49:34.065Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-04-04T04:58:28.122Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
