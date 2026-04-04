@@ -140,21 +140,8 @@ export function registerIpcHandlers(
     return agentManager.getTaskLogs(data.id);
   });
 
-  // Sidebar task retry (renderer -> main) -- per D-19
+  // Sidebar task retry -- re-submit with original context (no re-selection needed)
   ipcMain.handle('sidebar:task-retry', async (_event, data: { id: string }) => {
-    const task = agentManager.getTask(data.id);
-    if (!task) return;
-
-    // Prefill the overlay instruction input with original text
-    components.overlayView.webContents.send('overlay:prefill-instruction', {
-      instruction: task.instruction,
-    });
-
-    // Activate overlay for new selection + instruction
-    setOverlayActive(components.overlayView, components.window, components);
-    components.overlayView.webContents.send('overlay:mode-change', 'selection');
-
-    // Dismiss the errored task (it will be replaced by the new submission)
-    agentManager.dismissTask(data.id);
+    await agentManager.retryTask(data.id);
   });
 }

@@ -329,7 +329,7 @@ describe('AgentManager', () => {
       { type: 'result', subtype: 'success', result: 'Done!', is_error: false, duration_ms: 100 },
     ];
 
-    const newId = await manager.retryTask(id, sampleScreenshot, sampleDom, sampleBounds);
+    const newId = await manager.retryTask(id);
     expect(newId).not.toBe(id);
 
     // The new task should use the original instruction

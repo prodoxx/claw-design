@@ -84,6 +84,10 @@ function humanReadableError(errors: string[]): string {
   if (joined.includes('invalid_request')) {
     return 'Invalid request. Check your Claude Code installation.';
   }
+  if (joined.length > 0) {
+    // Show the actual error for debugging (truncated)
+    return joined.slice(0, 200);
+  }
   return 'Something went wrong. Retry or dismiss to continue.';
 }
 
@@ -173,25 +177,17 @@ export class AgentManager {
   }
 
   /**
-   * Retry a failed or completed task with fresh visual context.
-   * Creates a new task using the original instruction.
+   * Retry a task re-using its original screenshot, DOM context, and bounds.
+   * Dismisses the old task and creates a new one.
    */
-  async retryTask(
-    id: string,
-    freshScreenshot: Buffer,
-    freshDom: DomExtractionResult,
-    freshBounds: CSSRect,
-  ): Promise<string> {
+  async retryTask(id: string): Promise<string> {
     const original = this.tasks.get(id);
     if (!original) {
       throw new Error(`Task ${id} not found`);
     }
-    return this.submitTask({
-      instruction: original.instruction,
-      screenshot: freshScreenshot,
-      dom: freshDom,
-      bounds: freshBounds,
-    });
+    const { instruction, screenshot, dom, bounds } = original;
+    this.dismissTask(id);
+    return this.submitTask({ instruction, screenshot, dom, bounds });
   }
 
   /**
@@ -386,10 +382,9 @@ export class AgentManager {
       // Aborted queries throw; only set error if not already done
       if (task.status !== 'done' && task.status !== 'error') {
         task.status = 'error';
-        task.error =
-          err instanceof Error
-            ? err.message
-            : 'Something went wrong. Retry or dismiss to continue.';
+        const errMsg = err instanceof Error ? err.message : String(err);
+        task.error = errMsg || 'Something went wrong. Retry or dismiss to continue.';
+        this.addLog(task, 'status', `Error: ${errMsg}`);
         this.emitUpdate(task);
       }
     } finally {
