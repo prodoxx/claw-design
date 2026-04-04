@@ -7,6 +7,12 @@
   <link rel="stylesheet" href="./overlay.css">
 </head>
 <body>
+  <!-- Selection rectangle (positioned absolutely by JS) -->
+  <div id="claw-selection-rect" class="claw-selection-rect" hidden></div>
+
+  <!-- Element hover highlight (positioned absolutely by JS) -->
+  <div id="claw-element-highlight" class="claw-element-highlight" hidden></div>
+
   <div id="claw-toolbar" class="claw-toolbar">
     <!-- Drag handle (non-interactive indicator) -->
     <div class="claw-toolbar-handle" aria-hidden="true">
@@ -23,14 +29,23 @@
       </svg>
     </div>
 
-    <!-- Selection mode trigger -->
-    <button id="claw-select-btn" class="claw-toolbar-btn" aria-label="Select element">
+    <!-- Rectangle selection mode trigger -->
+    <button id="claw-select-btn" class="claw-toolbar-btn" aria-label="Select region">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <!-- Dotted selection rectangle -->
         <rect x="2" y="6" width="12" height="12" rx="1" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2" fill="none"/>
         <!-- Cursor arrow -->
         <path d="M11 2L11 11.5L13.8 9L16.5 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M11 2L11 11.5L13.8 9" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <!-- Element select mode trigger (per D-02) -->
+    <button id="claw-elem-btn" class="claw-toolbar-btn" aria-label="Select element">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <!-- Pointer cursor with element bounding box (browser inspector icon style) -->
+        <rect x="6" y="6" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <path d="M2 2L2 10L4.5 7.5L7 12L8.5 11.2L6 6.5L9 6.5Z" fill="currentColor"/>
       </svg>
     </button>
   </div>

@@ -61,3 +61,55 @@ html, body {
   color: #fff;
   background: rgba(255, 255, 255, 0.15);
 }
+
+/* Selection rectangle (freeform drawing) -- per D-05, D-07, UI spec selection accent detail */
+.claw-selection-rect {
+  position: absolute;
+  border: 2px solid rgba(138, 180, 248, 0.8);
+  background: rgba(138, 180, 248, 0.08);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.claw-selection-rect--committed {
+  border-color: rgba(138, 180, 248, 0.9);
+  background: rgba(138, 180, 248, 0.10);
+}
+
+/* Element hover highlight -- per D-06, UI spec */
+.claw-element-highlight {
+  position: absolute;
+  border: 2px solid rgba(138, 180, 248, 0.6);
+  background: rgba(138, 180, 248, 0.06);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 80ms ease-out;
+}
+
+.claw-element-highlight--visible {
+  opacity: 1;
+}
+
+.claw-element-highlight--committed {
+  border-color: rgba(138, 180, 248, 0.9);
+  background: rgba(138, 180, 248, 0.10);
+  opacity: 1;
+}
+
+/* Toolbar button active state -- per UI spec text colors */
+.claw-toolbar-btn--active {
+  color: rgba(138, 180, 248, 1) !important;
+  background: rgba(138, 180, 248, 0.15) !important;
+}
+
+/* Accessibility: reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .claw-element-highlight,
+  .claw-toolbar,
+  .claw-toolbar-btn {
+    transition: none !important;
+  }
+}
