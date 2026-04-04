@@ -287,6 +287,7 @@ export class AgentManager {
       task.instruction,
       task.screenshot,
       task.dom,
+      task.bounds,
     );
 
     // Build clean env: strip ANTHROPIC_API_KEY if set, so the SDK subprocess

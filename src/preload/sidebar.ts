@@ -28,6 +28,11 @@ const sidebarAPI = {
   retryTask: (id: string): Promise<void> =>
     ipcRenderer.invoke('sidebar:task-retry', { id }),
 
+  /** Listen for sidebar state changes from main process (e.g. D-08 auto-minimize) */
+  onStateChange: (callback: (state: 'hidden' | 'minimized' | 'expanded') => void): void => {
+    ipcRenderer.on('sidebar:state-change', (_event, state) => callback(state));
+  },
+
   /** Get logs for a specific task */
   getTaskLogs: (id: string): Promise<Array<{ timestamp: number; type: string; content: string }>> =>
     ipcRenderer.invoke('sidebar:task-logs', { id }),

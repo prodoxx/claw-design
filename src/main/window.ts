@@ -127,6 +127,8 @@ export function createMainWindow(
   function setSidebarState(state: 'hidden' | 'minimized' | 'expanded'): void {
     sidebarState = state;
     applySidebarBounds();
+    // Sync visual state to sidebar renderer so it shows the right UI
+    sidebarView.webContents.send('sidebar:state-change', state);
   }
 
   // D-13: Auto-sync all views to window content area on resize

@@ -6,6 +6,7 @@ import {
   computeBadge,
   INITIAL_SIDEBAR_STATE,
   type SidebarState,
+  type SidebarEvent,
   type TaskUpdate,
   type SidebarVisualState,
 } from './sidebar-state.js';
@@ -29,6 +30,7 @@ declare global {
       dismissTask: (id: string) => Promise<void>;
       retryTask: (id: string) => Promise<void>;
       getTaskLogs: (id: string) => Promise<TaskLogEntry[]>;
+      onStateChange: (cb: (state: 'hidden' | 'minimized' | 'expanded') => void) => void;
     };
   }
 }
@@ -483,5 +485,16 @@ document.addEventListener('DOMContentLoaded', () => {
       clearTimeout(autoExpandTimer);
       autoExpandTimer = null;
     }
+  });
+
+  // 5. Listen for state changes from main process (e.g. D-08 auto-minimize)
+  window.clawSidebar.onStateChange((newState) => {
+    const result = sidebarTransition(state, {
+      type: newState === 'expanded' ? 'EXPAND' : newState === 'minimized' ? 'COLLAPSE' : 'TASK_DISMISSED',
+      ...(newState === 'hidden' ? { id: '' } : {}),
+    } as SidebarEvent);
+    state = { ...result.state, visual: newState as SidebarVisualState };
+    updateSidebarState(newState as SidebarVisualState);
+    updateBadge();
   });
 });
