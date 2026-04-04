@@ -1,21 +1,421 @@
 // Overlay renderer script
 // Phase 2: toolbar display and mode change listener
-// Phase 3: selection UI built on top of this
+// Phase 3: selection state machine, rectangle drawing, element hover/click
 
-const selectBtn = document.getElementById('claw-select-btn');
+// ============================================================
+// Pure state machine (exported for testing -- no DOM dependency)
+// ============================================================
 
-if (selectBtn) {
-  selectBtn.addEventListener('click', () => {
-    if (window.claw?.activateSelection) {
-      window.claw.activateSelection();
-    }
-  });
+export type OverlayMode =
+  | 'inactive'
+  | 'rect-idle'
+  | 'rect-drawing'
+  | 'rect-committed'
+  | 'elem-idle'
+  | 'elem-hovering'
+  | 'elem-committed';
+
+export interface SelectionBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
-// Listen for overlay mode changes from main process
-if (window.claw?.onModeChange) {
-  window.claw.onModeChange((mode) => {
-    // Phase 3: toggle selection UI visibility based on mode
-    console.debug('[claw-overlay] mode:', mode);
+export interface SelectionState {
+  mode: OverlayMode;
+  startX: number;
+  startY: number;
+  currentX: number;
+  currentY: number;
+  hoveredRect: SelectionBounds | null;
+  selectionBounds: SelectionBounds | null;
+}
+
+export type SelectionEvent =
+  | { type: 'ACTIVATE_RECT' }
+  | { type: 'ACTIVATE_ELEM' }
+  | { type: 'MOUSE_DOWN'; x: number; y: number }
+  | { type: 'MOUSE_MOVE'; x: number; y: number }
+  | { type: 'MOUSE_UP'; x: number; y: number }
+  | { type: 'ELEMENT_HOVER'; rect: SelectionBounds }
+  | { type: 'ELEMENT_CLICK' }
+  | { type: 'CANCEL' };
+
+export const INITIAL_STATE: SelectionState = {
+  mode: 'inactive',
+  startX: 0,
+  startY: 0,
+  currentX: 0,
+  currentY: 0,
+  hoveredRect: null,
+  selectionBounds: null,
+};
+
+export const MIN_SELECTION_SIZE = 16;
+
+const RESET_FIELDS = {
+  startX: 0,
+  startY: 0,
+  currentX: 0,
+  currentY: 0,
+  hoveredRect: null,
+  selectionBounds: null,
+};
+
+export function transition(
+  state: SelectionState,
+  event: SelectionEvent,
+): SelectionState {
+  switch (event.type) {
+    case 'ACTIVATE_RECT': {
+      // From inactive, any committed, or any idle -> rect-idle
+      if (
+        state.mode === 'inactive' ||
+        state.mode === 'rect-committed' ||
+        state.mode === 'elem-committed' ||
+        state.mode === 'elem-idle' ||
+        state.mode === 'elem-hovering'
+      ) {
+        return { ...INITIAL_STATE, mode: 'rect-idle' };
+      }
+      return state;
+    }
+
+    case 'ACTIVATE_ELEM': {
+      // From inactive, any committed, or any idle -> elem-idle
+      if (
+        state.mode === 'inactive' ||
+        state.mode === 'rect-committed' ||
+        state.mode === 'elem-committed' ||
+        state.mode === 'rect-idle' ||
+        state.mode === 'rect-drawing'
+      ) {
+        return { ...INITIAL_STATE, mode: 'elem-idle' };
+      }
+      return state;
+    }
+
+    case 'MOUSE_DOWN': {
+      if (state.mode === 'rect-idle') {
+        return {
+          ...state,
+          mode: 'rect-drawing',
+          startX: event.x,
+          startY: event.y,
+          currentX: event.x,
+          currentY: event.y,
+        };
+      }
+      return state;
+    }
+
+    case 'MOUSE_MOVE': {
+      if (state.mode === 'rect-drawing') {
+        return {
+          ...state,
+          currentX: event.x,
+          currentY: event.y,
+        };
+      }
+      return state;
+    }
+
+    case 'MOUSE_UP': {
+      if (state.mode === 'rect-drawing') {
+        const x = Math.min(state.startX, event.x);
+        const y = Math.min(state.startY, event.y);
+        const width = Math.abs(event.x - state.startX);
+        const height = Math.abs(event.y - state.startY);
+
+        if (width >= MIN_SELECTION_SIZE && height >= MIN_SELECTION_SIZE) {
+          return {
+            ...state,
+            mode: 'rect-committed',
+            currentX: event.x,
+            currentY: event.y,
+            selectionBounds: { x, y, width, height },
+          };
+        }
+        // Too small -- return to idle
+        return {
+          ...state,
+          mode: 'rect-idle',
+          startX: 0,
+          startY: 0,
+          currentX: 0,
+          currentY: 0,
+          selectionBounds: null,
+        };
+      }
+      return state;
+    }
+
+    case 'ELEMENT_HOVER': {
+      if (state.mode === 'elem-idle' || state.mode === 'elem-hovering') {
+        return {
+          ...state,
+          mode: 'elem-hovering',
+          hoveredRect: event.rect,
+        };
+      }
+      return state;
+    }
+
+    case 'ELEMENT_CLICK': {
+      if (state.mode === 'elem-hovering' && state.hoveredRect) {
+        return {
+          ...state,
+          mode: 'elem-committed',
+          selectionBounds: state.hoveredRect,
+        };
+      }
+      return state;
+    }
+
+    case 'CANCEL': {
+      if (state.mode !== 'inactive') {
+        return { ...INITIAL_STATE };
+      }
+      return state;
+    }
+
+    default:
+      return state;
+  }
+}
+
+// ============================================================
+// DOM wiring (only runs in browser environment)
+// ============================================================
+
+function isInBrowser(): boolean {
+  return typeof document !== 'undefined' && typeof window !== 'undefined';
+}
+
+if (isInBrowser()) {
+  let state: SelectionState = { ...INITIAL_STATE };
+  let elemHoverRafPending = false;
+
+  function dispatch(event: SelectionEvent): void {
+    const prev = state;
+    state = transition(state, event);
+    if (state !== prev) {
+      render(state);
+    }
+  }
+
+  function render(s: SelectionState): void {
+    const selectionRect = document.getElementById('claw-selection-rect');
+    const elementHighlight = document.getElementById('claw-element-highlight');
+    const selectBtn = document.getElementById('claw-select-btn');
+    const elemBtn = document.getElementById('claw-elem-btn');
+
+    // Cursor
+    if (s.mode === 'rect-idle' || s.mode === 'rect-drawing') {
+      document.body.style.cursor = 'crosshair';
+    } else {
+      document.body.style.cursor = 'default';
+    }
+
+    // Selection rectangle visibility and positioning
+    if (selectionRect) {
+      if (
+        s.mode === 'rect-drawing' ||
+        s.mode === 'rect-committed'
+      ) {
+        selectionRect.hidden = false;
+
+        if (s.mode === 'rect-drawing') {
+          const x = Math.min(s.startX, s.currentX);
+          const y = Math.min(s.startY, s.currentY);
+          const w = Math.abs(s.currentX - s.startX);
+          const h = Math.abs(s.currentY - s.startY);
+          selectionRect.style.left = `${x}px`;
+          selectionRect.style.top = `${y}px`;
+          selectionRect.style.width = `${w}px`;
+          selectionRect.style.height = `${h}px`;
+          selectionRect.classList.add('claw-selection-rect--drawing');
+          selectionRect.classList.remove('claw-selection-rect--committed');
+        } else if (s.mode === 'rect-committed' && s.selectionBounds) {
+          selectionRect.style.left = `${s.selectionBounds.x}px`;
+          selectionRect.style.top = `${s.selectionBounds.y}px`;
+          selectionRect.style.width = `${s.selectionBounds.width}px`;
+          selectionRect.style.height = `${s.selectionBounds.height}px`;
+          selectionRect.classList.remove('claw-selection-rect--drawing');
+          selectionRect.classList.add('claw-selection-rect--committed');
+        }
+      } else {
+        selectionRect.hidden = true;
+        selectionRect.classList.remove(
+          'claw-selection-rect--drawing',
+          'claw-selection-rect--committed',
+        );
+      }
+    }
+
+    // Element highlight visibility and positioning
+    if (elementHighlight) {
+      if (s.mode === 'elem-hovering' && s.hoveredRect) {
+        elementHighlight.hidden = false;
+        elementHighlight.style.left = `${s.hoveredRect.x}px`;
+        elementHighlight.style.top = `${s.hoveredRect.y}px`;
+        elementHighlight.style.width = `${s.hoveredRect.width}px`;
+        elementHighlight.style.height = `${s.hoveredRect.height}px`;
+        elementHighlight.classList.add('claw-element-highlight--visible');
+        elementHighlight.classList.remove('claw-element-highlight--committed');
+      } else if (s.mode === 'elem-committed' && s.selectionBounds) {
+        elementHighlight.hidden = false;
+        elementHighlight.style.left = `${s.selectionBounds.x}px`;
+        elementHighlight.style.top = `${s.selectionBounds.y}px`;
+        elementHighlight.style.width = `${s.selectionBounds.width}px`;
+        elementHighlight.style.height = `${s.selectionBounds.height}px`;
+        elementHighlight.classList.remove('claw-element-highlight--visible');
+        elementHighlight.classList.add('claw-element-highlight--committed');
+      } else {
+        elementHighlight.hidden = true;
+        elementHighlight.classList.remove(
+          'claw-element-highlight--visible',
+          'claw-element-highlight--committed',
+        );
+      }
+    }
+
+    // Toolbar button active states
+    if (selectBtn) {
+      if (
+        s.mode === 'rect-idle' ||
+        s.mode === 'rect-drawing' ||
+        s.mode === 'rect-committed'
+      ) {
+        selectBtn.classList.add('claw-toolbar-btn--active');
+      } else {
+        selectBtn.classList.remove('claw-toolbar-btn--active');
+      }
+    }
+
+    if (elemBtn) {
+      if (
+        s.mode === 'elem-idle' ||
+        s.mode === 'elem-hovering' ||
+        s.mode === 'elem-committed'
+      ) {
+        elemBtn.classList.add('claw-toolbar-btn--active');
+      } else {
+        elemBtn.classList.remove('claw-toolbar-btn--active');
+      }
+    }
+
+    // Dispatch custom event on committed selection
+    if (
+      (s.mode === 'rect-committed' || s.mode === 'elem-committed') &&
+      s.selectionBounds
+    ) {
+      document.dispatchEvent(
+        new CustomEvent('claw:selection-committed', {
+          detail: { bounds: s.selectionBounds },
+        }),
+      );
+    }
+  }
+
+  // --- Event listeners ---
+
+  // Rectangle select button
+  const selectBtn = document.getElementById('claw-select-btn');
+  if (selectBtn) {
+    selectBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state.mode === 'inactive' || state.mode === 'elem-idle' || state.mode === 'elem-hovering' || state.mode === 'elem-committed') {
+        dispatch({ type: 'ACTIVATE_RECT' });
+        window.claw?.activateSelection();
+      } else if (
+        state.mode === 'rect-idle' ||
+        state.mode === 'rect-drawing' ||
+        state.mode === 'rect-committed'
+      ) {
+        dispatch({ type: 'CANCEL' });
+        window.claw?.deactivateSelection();
+      }
+    });
+  }
+
+  // Element select button
+  const elemBtn = document.getElementById('claw-elem-btn');
+  if (elemBtn) {
+    elemBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state.mode === 'inactive' || state.mode === 'rect-idle' || state.mode === 'rect-drawing' || state.mode === 'rect-committed') {
+        dispatch({ type: 'ACTIVATE_ELEM' });
+        window.claw?.activateSelection();
+      } else if (
+        state.mode === 'elem-idle' ||
+        state.mode === 'elem-hovering' ||
+        state.mode === 'elem-committed'
+      ) {
+        dispatch({ type: 'CANCEL' });
+        window.claw?.deactivateSelection();
+      }
+    });
+  }
+
+  // Mouse events for rectangle drawing
+  document.addEventListener('mousedown', (e) => {
+    if (state.mode === 'rect-idle') {
+      dispatch({ type: 'MOUSE_DOWN', x: e.clientX, y: e.clientY });
+    }
   });
+
+  document.addEventListener('mousemove', (e) => {
+    if (state.mode === 'rect-drawing') {
+      dispatch({ type: 'MOUSE_MOVE', x: e.clientX, y: e.clientY });
+    } else if (
+      (state.mode === 'elem-idle' || state.mode === 'elem-hovering') &&
+      !elemHoverRafPending
+    ) {
+      elemHoverRafPending = true;
+      const x = e.clientX;
+      const y = e.clientY;
+      requestAnimationFrame(async () => {
+        elemHoverRafPending = false;
+        try {
+          const rect = await window.claw.getElementAtPoint(x, y);
+          if (rect) {
+            dispatch({ type: 'ELEMENT_HOVER', rect });
+          }
+        } catch {
+          // IPC failure -- silently ignore hover
+        }
+      });
+    }
+  });
+
+  document.addEventListener('mouseup', (e) => {
+    if (state.mode === 'rect-drawing') {
+      dispatch({ type: 'MOUSE_UP', x: e.clientX, y: e.clientY });
+    }
+  });
+
+  // Click for element selection
+  document.addEventListener('click', (e) => {
+    if (state.mode === 'elem-hovering') {
+      e.stopPropagation();
+      dispatch({ type: 'ELEMENT_CLICK' });
+    }
+  });
+
+  // Escape key cancels selection
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.mode !== 'inactive') {
+      dispatch({ type: 'CANCEL' });
+      window.claw?.deactivateSelection();
+    }
+  });
+
+  // Listen for overlay mode changes from main process
+  if (window.claw?.onModeChange) {
+    window.claw.onModeChange((mode) => {
+      console.debug('[claw-overlay] mode:', mode);
+    });
+  }
 }

@@ -26,4 +26,26 @@ export function registerIpcHandlers(components: WindowComponents): void {
     setOverlayInactive(components.overlayView, components.window);
     components.overlayView.webContents.send('overlay:mode-change', 'inactive');
   });
+
+  // Get element bounding rect at a point in the site view
+  // Per D-04: top-level document only, no shadow DOM or iframe traversal
+  ipcMain.handle(
+    'overlay:get-element-at-point',
+    async (_event, x: number, y: number) => {
+      const result = await components.siteView.webContents.executeJavaScript(`
+        (function() {
+          const el = document.elementFromPoint(${x}, ${y});
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return {
+            x: Math.round(rect.x),
+            y: Math.round(rect.y),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+          };
+        })()
+      `);
+      return result;
+    },
+  );
 }
