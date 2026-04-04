@@ -1,0 +1,346 @@
+/* Sidebar renderer: dark chrome aesthetic matching overlay */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   Minimized state: icon + badge (vertically stacked)
+   ============================================================ */
+
+.sidebar-minimized {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+}
+
+.sidebar-expand-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(10, 10, 10, 0.88);
+  border: none;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.sidebar-expand-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Badge counter below the expand icon */
+.sidebar-badge {
+  background: rgba(10, 10, 10, 0.88);
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin-top: 4px;
+  border: 2px solid transparent;
+}
+
+#sidebar-badge-text {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.0;
+  color: rgba(138, 180, 248, 1);
+}
+
+/* Badge pulse animations (single-shot on task complete/error while minimized) */
+@keyframes badge-pulse-done {
+  0% {
+    border-color: transparent;
+  }
+  50% {
+    border-color: rgba(138, 180, 248, 0.6);
+  }
+  100% {
+    border-color: transparent;
+  }
+}
+
+@keyframes badge-pulse-error {
+  0% {
+    border-color: transparent;
+  }
+  50% {
+    border-color: rgba(248, 150, 138, 0.7);
+  }
+  100% {
+    border-color: transparent;
+  }
+}
+
+.sidebar-badge.pulse-done {
+  animation: badge-pulse-done 600ms ease-out 1;
+  border: 2px solid transparent;
+}
+
+.sidebar-badge.pulse-error {
+  animation: badge-pulse-error 600ms ease-out 1;
+  border: 2px solid transparent;
+}
+
+/* ============================================================
+   Expanded state: full sidebar panel
+   ============================================================ */
+
+.sidebar-expanded {
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.88);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.4);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header: "Tasks" label + minimize button */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 8px 16px;
+}
+
+.sidebar-header-label {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.36;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.sidebar-minimize-btn {
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  padding: 0;
+  transition: color 120ms ease;
+}
+
+.sidebar-minimize-btn:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ============================================================
+   Task list (scrollable container)
+   ============================================================ */
+
+.sidebar-task-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.sidebar-task-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================
+   Task row
+   ============================================================ */
+
+.task-row {
+  padding: 8px 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  animation: task-row-enter 150ms ease-out;
+}
+
+@keyframes task-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Instruction text: 2-line clamp */
+.task-instruction {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.38;
+  color: rgba(255, 255, 255, 0.8);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.task-instruction.error-row {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ============================================================
+   Status badge
+   ============================================================ */
+
+.task-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.0;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.status-badge.queued {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.sending {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  animation: status-pulse 1500ms ease-in-out infinite;
+}
+
+.status-badge.editing {
+  background: rgba(138, 180, 248, 0.15);
+  color: rgba(138, 180, 248, 1);
+  animation: status-pulse 1500ms ease-in-out infinite;
+}
+
+.status-badge.done {
+  background: rgba(138, 180, 248, 0.15);
+  color: rgba(138, 180, 248, 1);
+}
+
+.status-badge.error {
+  background: rgba(248, 150, 138, 0.15);
+  color: rgba(248, 150, 138, 1);
+}
+
+@keyframes status-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   Error message + button row
+   ============================================================ */
+
+.task-error-message {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(248, 150, 138, 0.9);
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.task-button-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.btn-retry {
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(138, 180, 248, 0.8);
+  cursor: pointer;
+  padding: 0;
+  transition: color 120ms ease;
+}
+
+.btn-retry:hover {
+  color: rgba(138, 180, 248, 1);
+}
+
+.btn-dismiss {
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0;
+  transition: color 120ms ease;
+}
+
+.btn-dismiss:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Dismiss button on hover of done rows (small x icon) */
+.task-row-dismiss-btn {
+  opacity: 0;
+  transition: opacity 80ms ease-out;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 4px;
+}
+
+.task-row:hover .task-row-dismiss-btn {
+  opacity: 1;
+}
+
+.task-row-dismiss-btn:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ============================================================
+   Accessibility: reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+}
