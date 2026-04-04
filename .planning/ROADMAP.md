@@ -63,13 +63,13 @@ Plans:
   3. After selection, an input field appears where the user can type a multi-line change instruction and submit it
   4. Screenshot of the selected region is captured correctly on both standard and Retina/HiDPI displays
   5. DOM elements within the selected region are extracted (structure, classes, IDs, text content, hierarchy)
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
-- [ ] 03-03: TBD
+- [ ] 03-01-PLAN.md -- Selection state machine, drawing/highlight UI, element detection IPC, toolbar extension
+- [ ] 03-02-PLAN.md -- DPI-aware screenshot capture module, DOM extraction module, capture IPC handlers
+- [ ] 03-03-PLAN.md -- Instruction input bar, submit flow (capture + DOM + IPC), visual verification
 
 ### Phase 4: Claude Code Integration
 **Goal**: User's instruction with visual context reaches Claude Code, which edits source files, and the user sees changes via HMR
