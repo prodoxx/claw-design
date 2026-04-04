@@ -24,10 +24,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Selection
 
-- [ ] **SEL-01**: User can draw a freeform rectangle over any area of the website to select a region
-- [ ] **SEL-02**: User can click a single DOM element to select it (element highlights on hover)
-- [ ] **SEL-03**: Selected region/element is visually highlighted with a clear boundary indicator
-- [ ] **SEL-04**: User can re-select the same or nearby area to continue editing in context (iterative refinement)
+- [x] **SEL-01**: User can draw a freeform rectangle over any area of the website to select a region
+- [x] **SEL-02**: User can click a single DOM element to select it (element highlights on hover)
+- [x] **SEL-03**: Selected region/element is visually highlighted with a clear boundary indicator
+- [x] **SEL-04**: User can re-select the same or nearby area to continue editing in context (iterative refinement)
 
 ### Capture
 
@@ -125,10 +125,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ELEC-01 | Phase 2 | Complete |
 | ELEC-02 | Phase 2 | Complete |
 | ELEC-03 | Phase 5 | Pending |
-| SEL-01 | Phase 3 | Pending |
-| SEL-02 | Phase 3 | Pending |
-| SEL-03 | Phase 3 | Pending |
-| SEL-04 | Phase 3 | Pending |
+| SEL-01 | Phase 3 | Complete |
+| SEL-02 | Phase 3 | Complete |
+| SEL-03 | Phase 3 | Complete |
+| SEL-04 | Phase 3 | Complete |
 | CAP-01 | Phase 3 | Pending |
 | CAP-02 | Phase 3 | Pending |
 | CAP-03 | Phase 3 | Pending |

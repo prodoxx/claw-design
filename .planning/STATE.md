@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-04-04T01:12:07.443Z"
-last_activity: 2026-04-03
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-04-04T04:49:34.068Z"
+last_activity: 2026-04-04
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 9
+  completed_plans: 7
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-03)
 
 **Core value:** Developers can visually select any part of their running website and describe changes in plain English -- Claude edits the code, HMR shows the result.
-**Current focus:** Phase 02 — electron-shell
+**Current focus:** Phase 03 — selection-overlay-capture
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (selection-overlay-capture) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-04-03
+Last activity: 2026-04-04
 
 Progress: [..........] 0%
 
@@ -56,6 +56,7 @@ Progress: [..........] 0%
 | Phase 01 P03 | 3min | 2 tasks | 2 files |
 | Phase 02-electron-shell P01 | 2min | 2 tasks | 7 files |
 | Phase 02 P02 | 3min | 2 tasks | 6 files |
+| Phase 03 P01 | 9min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - [Phase 02-electron-shell]: Added out/ to .gitignore for electron-vite build output
 - [Phase 02]: Overlay bounds toggle pattern: shrink to 48x48 when inactive, expand to full window when active (only viable approach since setIgnoreMouseEvents not available on WebContentsView)
 - [Phase 02]: Environment variables (CLAW_URL, CLAW_PROJECT_NAME) for CLI-to-Electron handshake
+- [Phase 03]: Pure state machine pattern: export transition() separately from DOM wiring with isInBrowser() guard for testability
+- [Phase 03]: requestAnimationFrame throttling for IPC-heavy element hover detection (prevents flooding main process)
 
 ### Pending Todos
 
@@ -87,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T01:12:07.440Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-selection-overlay-capture/03-UI-SPEC.md
+Last session: 2026-04-04T04:49:34.065Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None
