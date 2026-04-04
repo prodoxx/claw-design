@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { query, type SDKMessage, type SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
+import {
+  query,
+  type SDKMessage,
+  type SDKUserMessage,
+  type SDKAssistantMessage,
+  type SDKAuthStatusMessage,
+  type SDKAssistantMessageError,
+} from '@anthropic-ai/claude-agent-sdk';
 import type { DomExtractionResult } from './dom-extract.js';
 import type { CSSRect } from './capture.js';
 import { assemblePrompt } from './prompt.js';
@@ -35,15 +42,35 @@ interface InternalTask extends Task {
   queryRef?: { close: () => void };
   activity?: string;
   logs: TaskLogEntry[];
+  /**
+   * Collects fatal errors encountered during the stream (e.g. auth failures).
+   * If non-empty when result arrives, the task is marked 'error' regardless
+   * of the result subtype.
+   */
+  fatalErrors: string[];
 }
+
+/**
+ * Errors that indicate a fatal API/auth problem during the stream.
+ * If any assistant message carries one of these, the task should fail
+ * even if the SDK emits a result with subtype 'success'.
+ */
+const FATAL_ASSISTANT_ERRORS: ReadonlySet<SDKAssistantMessageError> = new Set([
+  'authentication_failed',
+  'billing_error',
+  'invalid_request',
+]);
 
 /**
  * Map known SDK error substrings to user-friendly messages.
  */
 function humanReadableError(errors: string[]): string {
   const joined = errors.join(' ');
-  if (joined.includes('authentication_failed')) {
-    return 'Authentication failed. Check your Claude API key.';
+  if (
+    joined.includes('authentication_failed') ||
+    joined.includes('Invalid API key')
+  ) {
+    return 'Not authenticated. Run "claude login" in your terminal, then retry.';
   }
   if (joined.includes('rate_limit')) {
     return 'Rate limit reached. Retry in a moment.';
@@ -53,6 +80,9 @@ function humanReadableError(errors: string[]): string {
   }
   if (joined.includes('server_error')) {
     return 'Claude server error. Retry in a moment.';
+  }
+  if (joined.includes('invalid_request')) {
+    return 'Invalid request. Check your Claude Code installation.';
   }
   return 'Something went wrong. Retry or dismiss to continue.';
 }
@@ -134,6 +164,7 @@ export class AgentManager {
       dom: input.dom,
       bounds: input.bounds,
       logs: [],
+      fatalErrors: [],
     };
     this.tasks.set(id, task);
     this.emitUpdate(task);
@@ -271,7 +302,7 @@ export class AgentManager {
         },
         allowedTools: ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'Bash'],
         permissionMode: 'acceptEdits',
-        settingSources: ['project'],
+        settingSources: ['user', 'project'],
         persistSession: false,
         maxTurns: 20,
       },
@@ -287,7 +318,27 @@ export class AgentManager {
           task.status = 'editing';
           this.addLog(task, 'status', 'Claude connected, starting edits...');
           this.emitUpdate(task);
+        } else if (msg.type === 'auth_status') {
+          // Auth status updates (e.g. OAuth flow progress or auth errors)
+          const authMsg = message as SDKAuthStatusMessage;
+          if (authMsg.error) {
+            task.fatalErrors.push(authMsg.error);
+            this.addLog(task, 'status', `Auth error: ${authMsg.error}`);
+          }
         } else if (msg.type === 'assistant') {
+          // Check for API-level errors on assistant messages (e.g. auth failures)
+          const assistantMsg = message as SDKAssistantMessage;
+          if (
+            assistantMsg.error &&
+            FATAL_ASSISTANT_ERRORS.has(assistantMsg.error)
+          ) {
+            task.fatalErrors.push(assistantMsg.error);
+            this.addLog(
+              task,
+              'status',
+              `API error: ${assistantMsg.error}`,
+            );
+          }
           // Extract tool use info for activity streaming
           this.extractActivity(task, msg);
         } else if (msg.type === 'tool_use_summary') {
@@ -299,13 +350,20 @@ export class AgentManager {
             this.emitUpdate(task);
           }
         } else if (msg.type === 'result') {
-          if (msg.subtype === 'success') {
+          // If fatal errors accumulated during the stream, override success
+          if (task.fatalErrors.length > 0) {
+            task.status = 'error';
+            task.error = humanReadableError(task.fatalErrors);
+            task.activity = undefined;
+            this.addLog(task, 'status', `Error: ${task.error}`);
+            this.emitUpdate(task);
+          } else if (msg.subtype === 'success') {
             task.status = 'done';
             task.activity = undefined;
             this.addLog(task, 'status', 'Completed');
             this.emitUpdate(task);
           } else {
-            // Error result
+            // Error result from SDK (execution errors, max turns, etc.)
             const errors = (msg.errors as string[]) || [];
             task.status = 'error';
             task.error = humanReadableError(errors);
