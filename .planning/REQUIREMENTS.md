@@ -43,8 +43,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Claude Integration
 
-- [ ] **CLAUD-01**: Screenshot + DOM context + user instruction are assembled into a prompt and sent to Claude Code
-- [ ] **CLAUD-02**: Claude Code edits source files based on the visual context and instruction
+- [x] **CLAUD-01**: Screenshot + DOM context + user instruction are assembled into a prompt and sent to Claude Code
+- [x] **CLAUD-02**: Claude Code edits source files based on the visual context and instruction
 - [x] **CLAUD-03**: Status feedback shows current state: capturing, sending to Claude, Claude editing, changes applied
 - [x] **CLAUD-04**: When Claude Code encounters an error, a clear message is shown with an option to retry
 
@@ -135,8 +135,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INST-01 | Phase 3 | Pending |
 | INST-02 | Phase 3 | Pending |
 | INST-03 | Phase 3 | Pending |
-| CLAUD-01 | Phase 4 | Pending |
-| CLAUD-02 | Phase 4 | Pending |
+| CLAUD-01 | Phase 4 | Complete |
+| CLAUD-02 | Phase 4 | Complete |
 | CLAUD-03 | Phase 4 | Complete |
 | CLAUD-04 | Phase 4 | Complete |
 | PROC-01 | Phase 1 | Complete |

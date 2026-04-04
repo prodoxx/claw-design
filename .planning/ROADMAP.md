@@ -84,7 +84,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 04-01-PLAN.md -- Prompt assembly module and AgentManager (concurrency, status tracking, error handling)
+- [x] 04-01-PLAN.md -- Prompt assembly module and AgentManager (concurrency, status tracking, error handling)
 - [x] 04-02-PLAN.md -- Sidebar WebContentsView renderer, styles, preload, and state machine
 - [ ] 04-03-PLAN.md -- Wire submit pipeline to AgentManager, sidebar IPC, retry/prefill flow, visual verification
 
