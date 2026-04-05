@@ -144,6 +144,12 @@ function createTaskRow(task: TaskUpdate): HTMLElement {
   badge.textContent = STATUS_LABELS[task.status];
   statusRow.appendChild(badge);
 
+  // Stop button for active tasks (sending/editing)
+  if (task.status === 'sending' || task.status === 'editing') {
+    const stopBtn = createStopButton(task.id);
+    statusRow.appendChild(stopBtn);
+  }
+
   // Undo + dismiss buttons for done rows (visible on hover via CSS)
   if (task.status === 'done') {
     const undoBtn = createUndoButton(task.id);
@@ -191,11 +197,20 @@ function updateTaskRow(row: HTMLElement, task: TaskUpdate): void {
     badge.textContent = STATUS_LABELS[task.status];
   }
 
-  // Remove existing undo, dismiss icon, error message, and button row
+  // Remove existing action buttons
+  row.querySelector('.task-row-stop-btn')?.remove();
   row.querySelector('.task-row-undo-btn')?.remove();
   row.querySelector('.task-row-dismiss-btn')?.remove();
   row.querySelector('.task-error-message')?.remove();
   row.querySelector('.task-button-row')?.remove();
+
+  // Add stop button for active tasks
+  if (task.status === 'sending' || task.status === 'editing') {
+    const statusRow = row.querySelector('.task-status-row');
+    if (statusRow) {
+      statusRow.appendChild(createStopButton(task.id));
+    }
+  }
 
   // Add undo + dismiss buttons for done rows
   if (task.status === 'done') {
@@ -215,6 +230,18 @@ function updateTaskRow(row: HTMLElement, task: TaskUpdate): void {
   if (expandedLogs.has(task.id)) {
     refreshLogs(task.id, row);
   }
+}
+
+function createStopButton(taskId: string): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.className = 'task-row-stop-btn';
+  btn.textContent = 'Stop';
+  btn.setAttribute('aria-label', 'Stop task');
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    window.clawSidebar.dismissTask(taskId);
+  });
+  return btn;
 }
 
 function createUndoButton(taskId: string): HTMLButtonElement {
