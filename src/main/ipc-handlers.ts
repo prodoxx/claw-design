@@ -145,9 +145,9 @@ export function registerIpcHandlers(
     await agentManager.retryTask(data.id);
   });
 
-  // Sidebar task undo -- revert files modified by a completed task
+  // Sidebar task undo -- submit a new task asking Claude to revert the change
   ipcMain.handle('sidebar:task-undo', async (_event, data: { id: string }) => {
-    return agentManager.undoTask(data.id);
+    await agentManager.undoTask(data.id);
   });
 
   // --- Sidebar drag IPC handlers ---

@@ -29,7 +29,7 @@ declare global {
       collapse: () => Promise<void>;
       dismissTask: (id: string) => Promise<void>;
       retryTask: (id: string) => Promise<void>;
-      undoTask: (id: string) => Promise<{ success: boolean; error?: string }>;
+      undoTask: (id: string) => Promise<void>;
       getTaskLogs: (id: string) => Promise<TaskLogEntry[]>;
       onStateChange: (cb: (state: 'hidden' | 'minimized' | 'expanded') => void) => void;
       dragDelta: (dx: number, dy: number) => Promise<{ x: number; y: number }>;
@@ -222,16 +222,9 @@ function createUndoButton(taskId: string): HTMLButtonElement {
   btn.className = 'task-row-undo-btn';
   btn.textContent = 'Undo';
   btn.setAttribute('aria-label', 'Undo task changes');
-  btn.addEventListener('click', async (e) => {
+  btn.addEventListener('click', (e) => {
     e.stopPropagation();
-    btn.disabled = true;
-    btn.textContent = '...';
-    const result = await window.clawSidebar.undoTask(taskId);
-    if (!result.success) {
-      btn.textContent = 'Undo';
-      btn.disabled = false;
-    }
-    // If success, the task update will come via onTaskUpdate and re-render
+    window.clawSidebar.undoTask(taskId);
   });
   return btn;
 }

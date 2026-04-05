@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
 import {
   query,
   type SDKMessage,
@@ -44,10 +43,6 @@ interface InternalTask extends Task {
   activity?: string;
   logs: TaskLogEntry[];
   fatalErrors: string[];
-  /** Files modified by this task (absolute paths from Edit/Write tool_use) */
-  modifiedFiles: Set<string>;
-  /** Git HEAD ref captured before task execution for undo */
-  preTaskRef?: string;
 }
 
 /**
@@ -169,7 +164,6 @@ export class AgentManager {
       bounds: input.bounds,
       logs: [],
       fatalErrors: [],
-      modifiedFiles: new Set(),
     };
     this.tasks.set(id, task);
     this.emitUpdate(task);
@@ -192,33 +186,22 @@ export class AgentManager {
   }
 
   /**
-   * Undo a completed task by reverting the files it modified.
-   * Uses git to restore files to their pre-task state.
+   * Undo a completed task by submitting a new task that asks Claude
+   * to revert the change, using the original screenshot/DOM as reference
+   * for what "before" looked like.
    */
-  undoTask(id: string): { success: boolean; error?: string } {
+  async undoTask(id: string): Promise<string> {
     const task = this.tasks.get(id);
-    if (!task) return { success: false, error: 'Task not found' };
-    if (task.status !== 'done') return { success: false, error: 'Only completed tasks can be undone' };
-    if (task.modifiedFiles.size === 0) return { success: false, error: 'No file changes to undo' };
-    if (!task.preTaskRef) return { success: false, error: 'No git ref available for undo' };
+    if (!task) throw new Error('Task not found');
+    if (task.status !== 'done') throw new Error('Only completed tasks can be undone');
 
-    try {
-      const files = Array.from(task.modifiedFiles);
-      execFileSync('git', ['checkout', task.preTaskRef, '--', ...files], {
-        cwd: this.projectDir,
-        timeout: 10_000,
-      });
-      // Mark task as undone
-      task.status = 'error';
-      task.error = `Undone: "${task.instruction}"`;
-      task.activity = undefined;
-      this.addLog(task, 'status', `Undone — reverted ${files.length} file(s)`);
-      this.emitUpdate(task);
-      return { success: true };
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return { success: false, error: `Git revert failed: ${msg}` };
-    }
+    this.dismissTask(id);
+    return this.submitTask({
+      instruction: `Undo the previous change: "${task.instruction}". Revert the code back to match the screenshot and DOM context shown here (this is what it looked like BEFORE the change was made).`,
+      screenshot: task.screenshot,
+      dom: task.dom,
+      bounds: task.bounds,
+    });
   }
 
   /**
@@ -309,17 +292,6 @@ export class AgentManager {
   private async executeTask(task: InternalTask): Promise<void> {
     const abortController = new AbortController();
     task.abortController = abortController;
-
-    // Capture git ref for undo support
-    try {
-      task.preTaskRef = execFileSync('git', ['rev-parse', 'HEAD'], {
-        cwd: this.projectDir,
-        encoding: 'utf-8',
-        timeout: 5000,
-      }).trim();
-    } catch {
-      // Not a git repo or git not available — undo won't work
-    }
 
     const prompt: AsyncIterable<SDKUserMessage> = assemblePrompt(
       task.instruction,
@@ -459,10 +431,6 @@ export class AgentManager {
         const activity = describeToolUse(toolName, input);
         task.activity = activity;
         this.addLog(task, 'tool', activity);
-        // Track file modifications for undo
-        if ((toolName === 'Edit' || toolName === 'Write') && input?.file_path) {
-          task.modifiedFiles.add(input.file_path as string);
-        }
         this.emitUpdate(task);
       } else if (block.type === 'text' && typeof block.text === 'string') {
         // Capture Claude's text responses in logs (not as activity)
