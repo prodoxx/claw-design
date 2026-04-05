@@ -543,7 +543,9 @@ if (isInBrowser()) {
           const tag = `[Image #${imageNum}]`;
           textarea.value = before + tag + after;
           textarea.selectionStart = textarea.selectionEnd = pos + tag.length;
-          textarea.dispatchEvent(new Event('input'));
+          // Trigger input event to enable submit button and auto-expand
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+          textarea.focus();
         };
         reader.readAsDataURL(blob);
       }
