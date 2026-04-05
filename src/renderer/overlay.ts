@@ -493,7 +493,6 @@ if (isInBrowser()) {
     const inputBar = document.getElementById('claw-input-bar')!;
     inputBar.classList.remove('claw-input-bar--visible');
     pastedImages.length = 0;
-    renderImagePreviews();
     setTimeout(() => {
       inputBar.hidden = true;
     }, 100);
@@ -501,7 +500,6 @@ if (isInBrowser()) {
 
   // Pasted reference images
   const pastedImages: Array<{ dataUrl: string; buffer: ArrayBuffer }> = [];
-  const imagesContainer = document.getElementById('claw-input-images')!;
 
   // Auto-expanding textarea (per D-10)
   const textarea = document.getElementById('claw-input-textarea') as HTMLTextAreaElement;
@@ -537,46 +535,22 @@ if (isInBrowser()) {
           const dataUrl = reader.result as string;
           const arrayBuf = Uint8Array.from(atob(dataUrl.split(',')[1]), (c) => c.charCodeAt(0)).buffer;
           pastedImages.push({ dataUrl, buffer: arrayBuf });
-          renderImagePreviews();
-          submitBtn.classList.add('claw-input-bar__submit--enabled');
-          submitBtn.removeAttribute('disabled');
+          const imageNum = pastedImages.length;
+          // Insert [Image #N] tag at cursor position in textarea
+          const pos = textarea.selectionStart;
+          const before = textarea.value.slice(0, pos);
+          const after = textarea.value.slice(pos);
+          const tag = `[Image #${imageNum}]`;
+          textarea.value = before + tag + after;
+          textarea.selectionStart = textarea.selectionEnd = pos + tag.length;
+          textarea.dispatchEvent(new Event('input'));
         };
         reader.readAsDataURL(blob);
       }
     }
   });
 
-  function renderImagePreviews(): void {
-    // Clear existing previews
-    while (imagesContainer.firstChild) {
-      imagesContainer.removeChild(imagesContainer.firstChild);
-    }
-    if (pastedImages.length === 0) {
-      imagesContainer.hidden = true;
-      return;
-    }
-    imagesContainer.hidden = false;
-    pastedImages.forEach((img, idx) => {
-      const thumb = document.createElement('div');
-      thumb.className = 'claw-input-bar__image-thumb';
-      const imgEl = document.createElement('img');
-      imgEl.src = img.dataUrl;
-      thumb.appendChild(imgEl);
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'claw-input-bar__image-remove';
-      removeBtn.textContent = '\u00d7';
-      removeBtn.addEventListener('click', () => {
-        pastedImages.splice(idx, 1);
-        renderImagePreviews();
-        if (!textarea.value.trim() && pastedImages.length === 0) {
-          submitBtn.classList.remove('claw-input-bar__submit--enabled');
-          submitBtn.setAttribute('disabled', '');
-        }
-      });
-      thumb.appendChild(removeBtn);
-      imagesContainer.appendChild(thumb);
-    });
-  }
+
 
   // Keyboard handling (per D-11): Enter submits, Shift+Enter adds newline
   textarea.addEventListener('keydown', (e) => {
@@ -600,10 +574,19 @@ if (isInBrowser()) {
       window.claw.extractDom(bounds),
     ]);
 
-    // Collect pasted reference images as Buffers
-    const referenceImages = pastedImages.map((img) =>
-      Buffer.from(new Uint8Array(img.buffer)),
-    );
+    // Only include pasted images whose [Image #N] tag is still in the text
+    const referenceImages: Buffer[] = [];
+    for (let i = 0; i < pastedImages.length; i++) {
+      if (instruction.includes(`[Image #${i + 1}]`)) {
+        referenceImages.push(Buffer.from(new Uint8Array(pastedImages[i].buffer)));
+      }
+    }
+    // If images were pasted but none are referenced, include all (no-tag usage)
+    if (pastedImages.length > 0 && referenceImages.length === 0 && !/\[Image #\d+\]/.test(instruction)) {
+      for (const img of pastedImages) {
+        referenceImages.push(Buffer.from(new Uint8Array(img.buffer)));
+      }
+    }
 
     // Submit instruction with all context to main process
     await window.claw.submitInstruction({
@@ -616,7 +599,6 @@ if (isInBrowser()) {
 
     // Clear pasted images
     pastedImages.length = 0;
-    renderImagePreviews();
 
     // Per D-12: after submit, selection and input disappear, return to inactive
     hideInputBar();
