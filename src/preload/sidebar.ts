@@ -28,6 +28,10 @@ const sidebarAPI = {
   retryTask: (id: string): Promise<void> =>
     ipcRenderer.invoke('sidebar:task-retry', { id }),
 
+  /** Undo a completed task (revert file changes) */
+  undoTask: (id: string): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('sidebar:task-undo', { id }),
+
   /** Listen for sidebar state changes from main process (e.g. D-08 auto-minimize) */
   onStateChange: (callback: (state: 'hidden' | 'minimized' | 'expanded') => void): void => {
     ipcRenderer.on('sidebar:state-change', (_event, state) => callback(state));

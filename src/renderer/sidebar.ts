@@ -29,6 +29,7 @@ declare global {
       collapse: () => Promise<void>;
       dismissTask: (id: string) => Promise<void>;
       retryTask: (id: string) => Promise<void>;
+      undoTask: (id: string) => Promise<{ success: boolean; error?: string }>;
       getTaskLogs: (id: string) => Promise<TaskLogEntry[]>;
       onStateChange: (cb: (state: 'hidden' | 'minimized' | 'expanded') => void) => void;
       dragDelta: (dx: number, dy: number) => Promise<{ x: number; y: number }>;
@@ -143,8 +144,10 @@ function createTaskRow(task: TaskUpdate): HTMLElement {
   badge.textContent = STATUS_LABELS[task.status];
   statusRow.appendChild(badge);
 
-  // Dismiss icon button for done rows (visible on hover via CSS)
+  // Undo + dismiss buttons for done rows (visible on hover via CSS)
   if (task.status === 'done') {
+    const undoBtn = createUndoButton(task.id);
+    statusRow.appendChild(undoBtn);
     const dismissIcon = createDismissIconButton(task.id);
     statusRow.appendChild(dismissIcon);
   }
@@ -188,20 +191,17 @@ function updateTaskRow(row: HTMLElement, task: TaskUpdate): void {
     badge.textContent = STATUS_LABELS[task.status];
   }
 
-  // Remove existing dismiss icon, error message, and button row
-  const existingDismissIcon = row.querySelector('.task-row-dismiss-btn');
-  if (existingDismissIcon) existingDismissIcon.remove();
+  // Remove existing undo, dismiss icon, error message, and button row
+  row.querySelector('.task-row-undo-btn')?.remove();
+  row.querySelector('.task-row-dismiss-btn')?.remove();
+  row.querySelector('.task-error-message')?.remove();
+  row.querySelector('.task-button-row')?.remove();
 
-  const existingErrorMsg = row.querySelector('.task-error-message');
-  if (existingErrorMsg) existingErrorMsg.remove();
-
-  const existingButtonRow = row.querySelector('.task-button-row');
-  if (existingButtonRow) existingButtonRow.remove();
-
-  // Add dismiss icon button for done rows
+  // Add undo + dismiss buttons for done rows
   if (task.status === 'done') {
     const statusRow = row.querySelector('.task-status-row');
     if (statusRow) {
+      statusRow.appendChild(createUndoButton(task.id));
       statusRow.appendChild(createDismissIconButton(task.id));
     }
   }
@@ -215,6 +215,25 @@ function updateTaskRow(row: HTMLElement, task: TaskUpdate): void {
   if (expandedLogs.has(task.id)) {
     refreshLogs(task.id, row);
   }
+}
+
+function createUndoButton(taskId: string): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.className = 'task-row-undo-btn';
+  btn.textContent = 'Undo';
+  btn.setAttribute('aria-label', 'Undo task changes');
+  btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    btn.disabled = true;
+    btn.textContent = '...';
+    const result = await window.clawSidebar.undoTask(taskId);
+    if (!result.success) {
+      btn.textContent = 'Undo';
+      btn.disabled = false;
+    }
+    // If success, the task update will come via onTaskUpdate and re-render
+  });
+  return btn;
 }
 
 function createDismissIconButton(taskId: string): HTMLButtonElement {
