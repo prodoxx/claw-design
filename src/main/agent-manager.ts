@@ -22,6 +22,7 @@ export interface Task {
   dom: DomExtractionResult;
   bounds: CSSRect;
   referenceImages?: Buffer[];
+  model?: string;
 }
 
 export interface TaskUpdate {
@@ -155,6 +156,7 @@ export class AgentManager {
     dom: DomExtractionResult;
     bounds: CSSRect;
     referenceImages?: Buffer[];
+    model?: string;
   }): Promise<string> {
     const id = randomUUID();
     const task: InternalTask = {
@@ -165,6 +167,7 @@ export class AgentManager {
       dom: input.dom,
       bounds: input.bounds,
       referenceImages: input.referenceImages,
+      model: input.model,
       logs: [],
       fatalErrors: [],
     };
@@ -327,6 +330,7 @@ export class AgentManager {
         settingSources: ['user', 'project'],
         persistSession: false,
         maxTurns: 20,
+        ...(task.model ? { model: task.model } : {}),
       },
     });
 

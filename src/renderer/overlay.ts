@@ -501,6 +501,16 @@ if (isInBrowser()) {
   // Pasted reference images
   const pastedImages: Array<{ dataUrl: string; buffer: ArrayBuffer }> = [];
 
+  // Model selector — restore preference from localStorage
+  const modelSelect = document.getElementById('claw-model-select') as HTMLSelectElement;
+  const savedModel = localStorage.getItem('claw-model');
+  if (savedModel && modelSelect.querySelector(`option[value="${savedModel}"]`)) {
+    modelSelect.value = savedModel;
+  }
+  modelSelect.addEventListener('change', () => {
+    localStorage.setItem('claw-model', modelSelect.value);
+  });
+
   // Auto-expanding textarea (per D-10)
   const textarea = document.getElementById('claw-input-textarea') as HTMLTextAreaElement;
   const submitBtn = document.getElementById('claw-input-submit')!;
@@ -601,6 +611,7 @@ if (isInBrowser()) {
       dom,
       bounds,
       referenceImages: referenceImages.length > 0 ? referenceImages : undefined,
+      model: modelSelect.value,
     });
 
     // Clear pasted images

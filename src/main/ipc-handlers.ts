@@ -95,6 +95,7 @@ export function registerIpcHandlers(
         dom: DomExtractionResult;
         bounds: CSSRect;
         referenceImages?: Buffer[];
+        model?: string;
       },
     ) => {
       // Pitfall 1: Buffer may arrive as Uint8Array via IPC structured cloning
@@ -107,6 +108,7 @@ export function registerIpcHandlers(
         dom: data.dom,
         bounds: data.bounds,
         referenceImages: refImages,
+        model: data.model,
       });
 
       // Shrink overlay back to inactive (user submitted, selection done)

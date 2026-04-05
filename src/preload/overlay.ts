@@ -68,6 +68,7 @@ const overlayAPI = {
     };
     bounds: { x: number; y: number; width: number; height: number };
     referenceImages?: Buffer[];
+    model?: string;
   }): Promise<void> =>
     ipcRenderer.invoke('overlay:submit-instruction', data),
 
