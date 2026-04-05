@@ -45,6 +45,35 @@ declare global {
 let state: SidebarState = { ...INITIAL_SIDEBAR_STATE, tasks: new Map() };
 let autoExpandTimer: ReturnType<typeof setTimeout> | null = null;
 const expandedLogs = new Set<string>(); // task IDs with visible log panels
+const taskTimers = new Map<string, { startTime: number; intervalId: ReturnType<typeof setInterval> }>();
+
+function formatElapsed(ms: number): string {
+  const totalSec = Math.floor(ms / 1000);
+  if (totalSec < 60) return `${totalSec}s`;
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${min}m ${sec.toString().padStart(2, '0')}s`;
+}
+
+function startTaskTimer(taskId: string): void {
+  if (taskTimers.has(taskId)) return;
+  const startTime = Date.now();
+  const intervalId = setInterval(() => {
+    const el = document.querySelector(`[data-task-id="${taskId}"] .task-timer`);
+    if (el) el.textContent = formatElapsed(Date.now() - startTime);
+  }, 1000);
+  taskTimers.set(taskId, { startTime, intervalId });
+}
+
+function stopTaskTimer(taskId: string): void {
+  const timer = taskTimers.get(taskId);
+  if (!timer) return;
+  clearInterval(timer.intervalId);
+  // Do one final update with the frozen time
+  const el = document.querySelector(`[data-task-id="${taskId}"] .task-timer`);
+  if (el) el.textContent = formatElapsed(Date.now() - timer.startTime);
+  taskTimers.delete(taskId);
+}
 
 // Status badge label copy (per copywriting contract)
 const STATUS_LABELS: Record<TaskUpdate['status'], string> = {
@@ -144,6 +173,17 @@ function createTaskRow(task: TaskUpdate): HTMLElement {
   badge.textContent = STATUS_LABELS[task.status];
   statusRow.appendChild(badge);
 
+  // Timer
+  const timerEl = document.createElement('span');
+  timerEl.className = 'task-timer';
+  timerEl.textContent = '0s';
+  statusRow.appendChild(timerEl);
+
+  // Start timer for active tasks
+  if (task.status === 'sending' || task.status === 'editing') {
+    startTaskTimer(task.id);
+  }
+
   // Stop button for active tasks (sending/editing)
   if (task.status === 'sending' || task.status === 'editing') {
     const stopBtn = createStopButton(task.id);
@@ -195,6 +235,13 @@ function updateTaskRow(row: HTMLElement, task: TaskUpdate): void {
   if (badge) {
     badge.className = `status-badge ${task.status}`;
     badge.textContent = STATUS_LABELS[task.status];
+  }
+
+  // Timer: start for active, stop for terminal
+  if (task.status === 'sending' || task.status === 'editing') {
+    startTaskTimer(task.id);
+  } else if (task.status === 'done' || task.status === 'error') {
+    stopTaskTimer(task.id);
   }
 
   // Remove existing action buttons
