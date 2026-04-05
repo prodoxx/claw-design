@@ -75,6 +75,13 @@ function stopTaskTimer(taskId: string): void {
   taskTimers.delete(taskId);
 }
 
+function shortModelName(model: string): string {
+  if (model.includes('opus')) return 'Opus';
+  if (model.includes('sonnet')) return 'Sonnet';
+  if (model.includes('haiku')) return 'Haiku';
+  return model.replace(/^claude-/, '').replace(/-\d{8}$/, '');
+}
+
 // Status badge label copy (per copywriting contract)
 const STATUS_LABELS: Record<TaskUpdate['status'], string> = {
   queued: 'Queued',
@@ -178,6 +185,14 @@ function createTaskRow(task: TaskUpdate): HTMLElement {
   timerEl.className = 'task-timer';
   timerEl.textContent = '0s';
   statusRow.appendChild(timerEl);
+
+  // Model label
+  if (task.model) {
+    const modelEl = document.createElement('span');
+    modelEl.className = 'task-model';
+    modelEl.textContent = shortModelName(task.model);
+    statusRow.appendChild(modelEl);
+  }
 
   // Start timer for active tasks
   if (task.status === 'sending' || task.status === 'editing') {

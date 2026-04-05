@@ -31,6 +31,7 @@ export interface TaskUpdate {
   status: TaskStatus;
   error?: string;
   activity?: string;
+  model?: string;
 }
 
 export interface TaskLogEntry {
@@ -469,6 +470,7 @@ export class AgentManager {
       status: task.status,
       error: task.error,
       activity: task.activity,
+      model: task.model,
     });
   }
 }
