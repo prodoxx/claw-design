@@ -21,8 +21,8 @@ body.claw-overlay--active {
 /* Vertical pill toolbar — view is already positioned at bottom-right by main process */
 .claw-toolbar {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: 12px;
+  right: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -185,6 +185,54 @@ body.claw-overlay--active {
 
 .claw-input-bar__submit:hover {
   color: rgba(138, 180, 248, 1);
+}
+
+/* Pasted image previews */
+.claw-input-bar__images {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px 0 16px;
+  flex-wrap: wrap;
+}
+
+.claw-input-bar__image-thumb {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.claw-input-bar__image-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.claw-input-bar__image-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 80ms ease;
+}
+
+.claw-input-bar__image-thumb:hover .claw-input-bar__image-remove {
+  opacity: 1;
 }
 
 .claw-input-bar__hint {

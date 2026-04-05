@@ -51,7 +51,7 @@ const overlayAPI = {
   }> =>
     ipcRenderer.invoke('overlay:extract-dom', bounds),
 
-  /** Submit instruction with screenshot + DOM context to main process (Plan 03-03) */
+  /** Submit instruction with screenshot + DOM context to main process */
   submitInstruction: (data: {
     instruction: string;
     screenshot: Buffer;
@@ -67,6 +67,7 @@ const overlayAPI = {
       viewport: { width: number; height: number };
     };
     bounds: { x: number; y: number; width: number; height: number };
+    referenceImages?: Buffer[];
   }): Promise<void> =>
     ipcRenderer.invoke('overlay:submit-instruction', data),
 

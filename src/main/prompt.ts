@@ -19,6 +19,7 @@ export function assemblePrompt(
   screenshotBuffer: Buffer,
   domContext: DomExtractionResult,
   bounds?: CSSRect,
+  referenceImages?: Buffer[],
 ): AsyncIterable<SDKUserMessage> {
   // Find the largest/most prominent element in the selection (likely the target)
   const primaryElement = domContext.elements.length > 0
@@ -41,7 +42,8 @@ export function assemblePrompt(
     instructionText += `\n\n**Selection bounds:** x=${bounds.x}, y=${bounds.y}, ${bounds.width}x${bounds.height}px`;
   }
 
-  const contentBlocks = [
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const contentBlocks: any[] = [
     {
       type: 'text' as const,
       text: instructionText,
@@ -54,14 +56,33 @@ export function assemblePrompt(
         data: screenshotBuffer.toString('base64'),
       },
     },
-    {
-      type: 'text' as const,
-      text:
-        '## DOM Context\n\nElements in the selected region:\n```json\n' +
-        JSON.stringify(domContext, null, 2) +
-        '\n```',
-    },
   ];
+
+  // Add user-pasted reference images
+  if (referenceImages && referenceImages.length > 0) {
+    contentBlocks.push({
+      type: 'text' as const,
+      text: `## Reference Image${referenceImages.length > 1 ? 's' : ''}\n\nThe user pasted ${referenceImages.length > 1 ? 'these images as' : 'this image as a'} reference for what the result should look like:`,
+    });
+    for (const buf of referenceImages) {
+      contentBlocks.push({
+        type: 'image' as const,
+        source: {
+          type: 'base64' as const,
+          media_type: 'image/png' as const,
+          data: buf.toString('base64'),
+        },
+      });
+    }
+  }
+
+  contentBlocks.push({
+    type: 'text' as const,
+    text:
+      '## DOM Context\n\nElements in the selected region:\n```json\n' +
+      JSON.stringify(domContext, null, 2) +
+      '\n```',
+  });
 
   const userMessage: SDKUserMessage = {
     type: 'user',

@@ -21,6 +21,7 @@ export interface Task {
   screenshot: Buffer;
   dom: DomExtractionResult;
   bounds: CSSRect;
+  referenceImages?: Buffer[];
 }
 
 export interface TaskUpdate {
@@ -153,6 +154,7 @@ export class AgentManager {
     screenshot: Buffer;
     dom: DomExtractionResult;
     bounds: CSSRect;
+    referenceImages?: Buffer[];
   }): Promise<string> {
     const id = randomUUID();
     const task: InternalTask = {
@@ -162,6 +164,7 @@ export class AgentManager {
       screenshot: input.screenshot,
       dom: input.dom,
       bounds: input.bounds,
+      referenceImages: input.referenceImages,
       logs: [],
       fatalErrors: [],
     };
@@ -298,6 +301,7 @@ export class AgentManager {
       task.screenshot,
       task.dom,
       task.bounds,
+      task.referenceImages,
     );
 
     // Build clean env: strip ANTHROPIC_API_KEY if set, so the SDK subprocess

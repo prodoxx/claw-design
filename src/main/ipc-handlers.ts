@@ -94,16 +94,19 @@ export function registerIpcHandlers(
         screenshot: Buffer;
         dom: DomExtractionResult;
         bounds: CSSRect;
+        referenceImages?: Buffer[];
       },
     ) => {
       // Pitfall 1: Buffer may arrive as Uint8Array via IPC structured cloning
       const screenshotBuffer = Buffer.from(data.screenshot);
+      const refImages = data.referenceImages?.map((b) => Buffer.from(b));
 
       const taskId = await agentManager.submitTask({
         instruction: data.instruction,
         screenshot: screenshotBuffer,
         dom: data.dom,
         bounds: data.bounds,
+        referenceImages: refImages,
       });
 
       // Shrink overlay back to inactive (user submitted, selection done)
