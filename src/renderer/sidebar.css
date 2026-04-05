@@ -143,6 +143,23 @@ body {
   color: rgba(255, 255, 255, 0.5);
 }
 
+.sidebar-clear-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-left: auto;
+  transition: color 120ms ease;
+}
+
+.sidebar-clear-btn:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .sidebar-minimize-btn {
   width: 28px;
   height: 28px;

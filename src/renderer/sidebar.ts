@@ -520,6 +520,22 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Minimize button click
   minimizeBtn.addEventListener('click', handleCollapse);
 
+  // 3b. Clear all finished tasks
+  const clearBtn = document.getElementById('sidebar-clear-btn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const finishedIds: string[] = [];
+      for (const [id, task] of state.tasks) {
+        if (task.status === 'done' || task.status === 'error') {
+          finishedIds.push(id);
+        }
+      }
+      for (const id of finishedIds) {
+        handleDismiss(id);
+      }
+    });
+  }
+
   // 4. Cancel auto-expand on user interaction with expanded panel
   expandedEl.addEventListener('mouseenter', () => {
     if (autoExpandTimer !== null) {
