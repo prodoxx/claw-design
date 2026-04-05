@@ -511,8 +511,8 @@ if (isInBrowser()) {
     const newHeight = Math.min(textarea.scrollHeight, 160);
     textarea.style.height = `${newHeight}px`;
 
-    // Enable/disable submit button
-    if (textarea.value.trim()) {
+    // Enable/disable submit button (keep enabled if images are pasted)
+    if (textarea.value.trim() || pastedImages.length > 0) {
       submitBtn.classList.add('claw-input-bar__submit--enabled');
       submitBtn.removeAttribute('disabled');
     } else {
@@ -543,8 +543,12 @@ if (isInBrowser()) {
           const tag = `[Image #${imageNum}]`;
           textarea.value = before + tag + after;
           textarea.selectionStart = textarea.selectionEnd = pos + tag.length;
-          // Trigger input event to enable submit button and auto-expand
-          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+          // Auto-expand textarea height
+          textarea.style.height = 'auto';
+          textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+          // Enable submit button directly
+          submitBtn.classList.add('claw-input-bar__submit--enabled');
+          submitBtn.removeAttribute('disabled');
           textarea.focus();
         };
         reader.readAsDataURL(blob);
