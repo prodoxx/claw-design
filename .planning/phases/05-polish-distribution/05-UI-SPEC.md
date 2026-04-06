@@ -33,8 +33,8 @@ Declared values (must be multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| xs | 4px | Icon gaps, tooltip arrow offset, toast icon-to-text gap |
-| sm | 8px | Toolbar divider vertical margin, toast internal padding (vertical), tooltip padding |
+| xs | 4px | Icon gaps, tooltip arrow offset, toast icon-to-text gap, tooltip vertical padding |
+| sm | 8px | Toolbar divider vertical margin, toast internal padding (vertical), tooltip horizontal padding |
 | md | 16px | Toast horizontal padding, splash content padding, banner padding |
 | lg | 24px | Splash logo-to-text gap, banner action button margin |
 | xl | 32px | Splash vertical centering offset |
@@ -200,7 +200,7 @@ Toast notifications render in the **overlay WebContentsView** (not a new view). 
 | Border | `1px solid rgba(255, 255, 255, 0.08)` |
 | Border-left | `2px solid {severity color}` (replaces generic left border) |
 | Border-radius | `12px` |
-| Padding | `12px 16px` |
+| Padding | `8px 16px` |
 | Box shadow | `0 4px 24px rgba(0, 0, 0, 0.4)` |
 | Layout | Flex row: icon (20x20) + gap 8px + content column |
 | Icon | Inline SVG, 20x20px, colored by severity |
@@ -311,7 +311,7 @@ Tooltips render in the overlay WebContentsView as absolutely positioned elements
 |----------|-------|
 | Background | `rgba(10, 10, 10, 0.95)` |
 | Border-radius | `8px` |
-| Padding | `6px 10px` |
+| Padding | `4px 8px` |
 | Font | 11px, regular (400), `rgba(255, 255, 255, 0.9)`, line-height 1.36 |
 | Box shadow | `0 2px 8px rgba(0, 0, 0, 0.3)` |
 | Position | To the left of the toolbar button, vertically centered, 8px gap |
