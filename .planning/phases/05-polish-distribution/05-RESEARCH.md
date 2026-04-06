@@ -527,22 +527,25 @@ export function checkElectronBinary(): boolean {
 | A3 | Pre-built output in `out/` should be published (vs runtime build) | npm Packaging Architecture | MEDIUM -- if runtime build is kept, electron-vite becomes a production dep and adds startup latency |
 | A4 | Ease-in-out CSS equivalent curve formula is correct | Code Examples | LOW -- standard math, visual only |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **How does the Electron main process learn about dev server crash?**
+1. **How does the Electron main process learn about dev server crash?** (RESOLVED -- Plan 05-03, Task 2)
    - What we know: CLI detects it via `devServer.on('exit')`. Electron main process is a separate process.
    - What's unclear: Best IPC path from CLI to Electron for this event.
    - Recommendation: Have the main process independently detect site unavailability by listening to `siteView.webContents` events (`did-fail-load`, `-did-navigate-to-error-page`) or periodic polling. This decouples from CLI.
+   - **Resolution:** Plan 05-03 Task 2 implements main process detection via `siteView.webContents.on('did-fail-load')` and `render-process-gone` events. No CLI-to-Electron IPC needed -- main process detects independently.
 
-2. **Should electron-vite output be pre-built or built at runtime?**
+2. **Should electron-vite output be pre-built or built at runtime?** (RESOLVED -- Plan 05-05, Task 1)
    - What we know: Currently `buildElectron()` runs at every `clawdesign start`. For global install, this requires `electron-vite` as prod dep.
    - What's unclear: Whether pre-built output in the npm tarball works correctly across platforms.
    - Recommendation: Pre-build with `prepublishOnly`. electron-vite config is deterministic (no platform-specific output). Test with `npm pack` + install from tarball.
+   - **Resolution:** Plan 05-05 Task 1 removes runtime `buildElectron()` from `start.ts`, adds `prepublishOnly: "npm run build"` to package.json, and includes pre-built `out/` in the `files` whitelist.
 
-3. **What files should be in the `files` whitelist?**
+3. **What files should be in the `files` whitelist?** (RESOLVED -- Plan 05-05, Task 1)
    - What we know: Need `dist/cli/` (CLI entry), `out/` (electron-vite output), `LICENSE`.
    - What's unclear: Whether `package.json` `bin` resolution works correctly from global install path with these directories.
    - Recommendation: Test with `npm pack --dry-run` to verify, then `npm install -g` from tarball.
+   - **Resolution:** Plan 05-05 Task 1 sets `"files": ["dist/", "out/", "LICENSE"]` in package.json. Validation via `tests/cli/package.test.ts` confirms the whitelist structure.
 
 ## Validation Architecture
 
