@@ -633,6 +633,21 @@ if (isInBrowser()) {
     showInputBar(e.detail.bounds);
   }) as EventListener);
 
+  // ============================================================
+  // Toast notification system (D-08, D-09, D-10)
+  // ============================================================
+
+  // Import toast functions from extracted module
+  import('./toast.js').then(({ showToast, dismissToast }) => {
+    // Wire toast IPC listeners via preload API
+    if (window.claw?.onToastShow) {
+      window.claw.onToastShow((data) => showToast(document, data));
+    }
+    if (window.claw?.onToastDismiss) {
+      window.claw.onToastDismiss((data) => dismissToast(document, data.id));
+    }
+  });
+
   // Listen for overlay mode changes from main process
   if (window.claw?.onModeChange) {
     window.claw.onModeChange((mode: string) => {

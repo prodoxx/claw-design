@@ -243,13 +243,128 @@ body.claw-overlay--active {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Toast notification container -- top center of window (D-09, D-10) */
+.claw-toast-container {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 300;
+  pointer-events: none;
+  max-width: 400px;
+  width: 100%;
+}
+
+/* Individual toast notification */
+.claw-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(10, 10, 10, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.claw-toast--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.claw-toast--exiting {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 150ms ease-in, transform 150ms ease-in;
+}
+
+/* Severity border-left colors */
+.claw-toast--info {
+  border-left: 2px solid rgba(138, 180, 248, 0.5);
+}
+
+.claw-toast--warning {
+  border-left: 2px solid rgba(255, 200, 120, 0.5);
+}
+
+.claw-toast--error {
+  border-left: 2px solid rgba(248, 150, 138, 0.5);
+}
+
+/* Toast icon */
+.claw-toast__icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+}
+
+.claw-toast--info .claw-toast__icon { color: rgba(138, 180, 248, 0.9); }
+.claw-toast--warning .claw-toast__icon { color: rgba(255, 200, 120, 0.9); }
+.claw-toast--error .claw-toast__icon { color: rgba(248, 150, 138, 0.9); }
+
+/* Toast content */
+.claw-toast__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.claw-toast__title {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: rgba(255, 255, 255, 0.9);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.claw-toast__message {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Toast dismiss button */
+.claw-toast__dismiss {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  margin-top: 4px;
+  transition: color 120ms ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+.claw-toast__dismiss:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 /* Accessibility: reduced motion */
 @media (prefers-reduced-motion: reduce) {
 
   .claw-element-highlight,
   .claw-toolbar,
   .claw-toolbar-btn,
-  .claw-input-bar {
+  .claw-input-bar,
+  .claw-toast,
+  .claw-toast--exiting {
     transition: none !important;
   }
 }

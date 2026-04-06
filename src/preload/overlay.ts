@@ -93,6 +93,22 @@ const overlayAPI = {
   onViewportChanged: (callback: (data: { preset: string }) => void): void => {
     ipcRenderer.on('viewport:changed', (_event, data) => callback(data));
   },
+
+  /** Listen for toast show events from main process (D-08, D-09) */
+  onToastShow: (callback: (data: {
+    id: string;
+    severity: 'info' | 'warning' | 'error';
+    title?: string;
+    message: string;
+    persistent: boolean;
+  }) => void): void => {
+    ipcRenderer.on('toast:show', (_event, data) => callback(data));
+  },
+
+  /** Listen for toast dismiss events from main process */
+  onToastDismiss: (callback: (data: { id: string }) => void): void => {
+    ipcRenderer.on('toast:dismiss', (_event, data) => callback(data));
+  },
 };
 
 contextBridge.exposeInMainWorld('claw', overlayAPI);
