@@ -1,6 +1,7 @@
 import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionError } from '../utils/dev-server.js';
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../utils/port-detect.js';
 import { isClaudeInstalled, getClaudeAuthStatus } from '../utils/claude.js';
+import { checkNodeVersion, checkElectronBinary } from '../utils/preflight.js';
 import { buildElectron, spawnElectron } from '../utils/electron.js';
 import { registerShutdownHandlers } from '../utils/process.js';
 import { createSpinner, printReady, printError } from '../utils/output.js';
@@ -18,6 +19,26 @@ export interface StartOptions {
 
 export async function startCommand(options: StartOptions): Promise<void> {
   const verbose = options.verbose ?? false;
+
+  // Pre-flight checks (D-14): fast checks before any async work
+  const nodeCheck = checkNodeVersion();
+  if (!nodeCheck.ok) {
+    printError(
+      'Node.js 20+ required',
+      `Found Node ${nodeCheck.version}.`,
+      'Update Node.js: https://nodejs.org'
+    );
+    process.exit(1);
+  }
+
+  if (!checkElectronBinary()) {
+    printError(
+      'Electron not found',
+      'The Electron binary is missing from the installation.',
+      'Reinstall: npm install -g claw-design'
+    );
+    process.exit(1);
+  }
 
   // Step 1: Check Claude Code installed (per D-12)
   if (!isClaudeInstalled()) {

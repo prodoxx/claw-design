@@ -22,6 +22,12 @@ vi.mock('../../src/cli/utils/port-detect.js', () => ({
 
 vi.mock('../../src/cli/utils/claude.js', () => ({
   isClaudeInstalled: vi.fn(),
+  getClaudeAuthStatus: vi.fn(),
+}));
+
+vi.mock('../../src/cli/utils/preflight.js', () => ({
+  checkNodeVersion: vi.fn(),
+  checkElectronBinary: vi.fn(),
 }));
 
 vi.mock('../../src/cli/utils/electron.js', () => ({
@@ -58,7 +64,8 @@ vi.mock('picocolors', () => ({
 
 import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionError } from '../../src/cli/utils/dev-server.js';
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../../src/cli/utils/port-detect.js';
-import { isClaudeInstalled } from '../../src/cli/utils/claude.js';
+import { isClaudeInstalled, getClaudeAuthStatus } from '../../src/cli/utils/claude.js';
+import { checkNodeVersion, checkElectronBinary } from '../../src/cli/utils/preflight.js';
 import { buildElectron, spawnElectron } from '../../src/cli/utils/electron.js';
 import { registerShutdownHandlers } from '../../src/cli/utils/process.js';
 import { createSpinner, printReady, printError } from '../../src/cli/utils/output.js';
@@ -71,6 +78,9 @@ const mockExtractPortFromOutput = vi.mocked(extractPortFromOutput);
 const mockWaitForPort = vi.mocked(waitForPort);
 const mockGetProcessOnPort = vi.mocked(getProcessOnPort);
 const mockIsClaudeInstalled = vi.mocked(isClaudeInstalled);
+const mockGetClaudeAuthStatus = vi.mocked(getClaudeAuthStatus);
+const mockCheckNodeVersion = vi.mocked(checkNodeVersion);
+const mockCheckElectronBinary = vi.mocked(checkElectronBinary);
 const mockBuildElectron = vi.mocked(buildElectron);
 const mockSpawnElectron = vi.mocked(spawnElectron);
 const mockRegisterShutdownHandlers = vi.mocked(registerShutdownHandlers);
@@ -132,6 +142,13 @@ describe('startCommand', () => {
     mockSpinner = makeMockSpinner();
     mockCreateSpinner.mockReturnValue(mockSpinner);
     mockDetectPackageManager.mockResolvedValue('npm');
+
+    // Pre-flight checks pass by default
+    mockCheckNodeVersion.mockReturnValue({ ok: true, version: '22.14.0' });
+    mockCheckElectronBinary.mockReturnValue(true);
+
+    // Auth check passes by default
+    mockGetClaudeAuthStatus.mockReturnValue({ loggedIn: true });
 
     mockDevServer = makeMockDevServer();
     mockElectronProcess = makeMockElectronProcess();
@@ -208,6 +225,36 @@ describe('startCommand', () => {
     expect(mockWaitForPort).toHaveBeenCalledWith(4000, { timeout: 30_000 });
     // extractPortFromOutput should NOT be called (no stdout listener needed)
     expect(mockExtractPortFromOutput).not.toHaveBeenCalled();
+  });
+
+  it('exits when Node version too low', async () => {
+    mockCheckNodeVersion.mockReturnValue({ ok: false, version: '18.19.0' });
+
+    await expect(startCommand({})).rejects.toThrow('process.exit called');
+
+    expect(mockPrintError).toHaveBeenCalledWith(
+      'Node.js 20+ required',
+      'Found Node 18.19.0.',
+      'Update Node.js: https://nodejs.org'
+    );
+    expect(mockExit).toHaveBeenCalledWith(1);
+    // Should stop before reaching Claude check
+    expect(mockIsClaudeInstalled).not.toHaveBeenCalled();
+  });
+
+  it('exits when Electron binary missing', async () => {
+    mockCheckElectronBinary.mockReturnValue(false);
+
+    await expect(startCommand({})).rejects.toThrow('process.exit called');
+
+    expect(mockPrintError).toHaveBeenCalledWith(
+      'Electron not found',
+      'The Electron binary is missing from the installation.',
+      'Reinstall: npm install -g claw-design'
+    );
+    expect(mockExit).toHaveBeenCalledWith(1);
+    // Should stop before reaching Claude check
+    expect(mockIsClaudeInstalled).not.toHaveBeenCalled();
   });
 
   it('exits when Claude Code not installed', async () => {
