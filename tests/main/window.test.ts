@@ -151,9 +151,28 @@ describe('createMainWindow', () => {
     expect(overlayView.setBackgroundColor).toHaveBeenCalledWith('#00000000');
   });
 
-  it('calls loadURL on site view with the provided URL', () => {
+  it('calls loadURL on site view with splash data URL (D-21)', () => {
     createMainWindow('http://localhost:3000', 'my-app', 3000);
     const siteView = mockWebContentsViewInstances[0];
+    // Initial load should be the splash screen data URL, not the site URL directly
+    expect(siteView.webContents.loadURL).toHaveBeenCalledWith(
+      expect.stringContaining('data:text/html'),
+    );
+    // Splash HTML should contain brand text and port
+    const loadedUrl = siteView.webContents.loadURL.mock.calls[0][0] as string;
+    const decoded = decodeURIComponent(loadedUrl);
+    expect(decoded).toContain('claw-design');
+    expect(decoded).toContain('localhost:3000');
+    expect(decoded).toContain('splash__spinner');
+  });
+
+  it('navigateToSite loads the actual site URL', () => {
+    const result = createMainWindow('http://localhost:3000', 'my-app', 3000);
+    const siteView = mockWebContentsViewInstances[0];
+    siteView.webContents.loadURL.mockClear();
+
+    result.navigateToSite();
+
     expect(siteView.webContents.loadURL).toHaveBeenCalledWith('http://localhost:3000');
   });
 

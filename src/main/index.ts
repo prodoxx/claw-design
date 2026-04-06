@@ -11,6 +11,11 @@ const port = parseInt(url.match(/:(\d+)/)?.[1] ?? '3000', 10);
 app.whenReady().then(() => {
   const components = createMainWindow(url, projectName, port);
 
+  // Navigate from splash to actual site URL (D-21)
+  // The splash shows immediately while the site loads.
+  // No minimum display time -- if site loads instantly, splash is replaced.
+  components.navigateToSite();
+
   // Setup navigation restriction (D-05, D-06)
   const allowedOrigin = new URL(url).origin;
   setupNavigation(components.siteView, allowedOrigin);

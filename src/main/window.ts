@@ -114,6 +114,8 @@ export interface WindowComponents {
   setViewport: (preset: ViewportPreset) => Promise<void>;
   /** Get current viewport preset */
   getViewport: () => ViewportPreset;
+  /** Navigate siteView from splash screen to actual site URL (D-21) */
+  navigateToSite: () => void;
 }
 
 /**
@@ -153,7 +155,66 @@ export function createMainWindow(
     },
   });
   win.contentView.addChildView(siteView);
-  siteView.webContents.loadURL(url);
+
+  // Splash screen (D-21): show branded loading page before site loads
+  const splashHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .splash {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .splash__brand {
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .splash__spinner {
+      width: 24px;
+      height: 24px;
+      border: 2px solid transparent;
+      border-top-color: rgba(138, 180, 248, 0.8);
+      border-radius: 50%;
+      animation: spin 800ms linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .splash__url {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .splash__spinner { animation: none; border-top-color: rgba(138, 180, 248, 0.5); }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash">
+    <div class="splash__brand">claw-design</div>
+    <div class="splash__spinner" aria-label="Loading application"></div>
+    <div class="splash__url">Loading localhost:${port}...</div>
+  </div>
+</body>
+</html>`;
+
+  siteView.webContents.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(splashHtml)}`);
 
   // Overlay view (top layer) -- ELEC-02: transparent overlay
   const overlayView = new WebContentsView({
@@ -305,6 +366,7 @@ export function createMainWindow(
     getSidebarUserPosition: () => sidebarUserPosition,
     setViewport: setViewportImpl,
     getViewport: () => currentViewport,
+    navigateToSite: () => { siteView.webContents.loadURL(url); },
   };
 }
 
