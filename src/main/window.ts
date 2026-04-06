@@ -1,6 +1,101 @@
 import { BaseWindow, WebContentsView } from 'electron';
 import path from 'node:path';
 
+// --- Viewport presets ---
+
+export const VIEWPORT_PRESETS = {
+  desktop: { width: 1280, height: 800 },
+  tablet: { width: 768, height: 1024 },
+  mobile: { width: 375, height: 812 },
+} as const;
+
+export type ViewportPreset = keyof typeof VIEWPORT_PRESETS;
+
+/** Rectangle shape for bounds computation */
+interface Rectangle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Compute the site view bounds for a given viewport preset and window size.
+ * - Desktop (or unknown preset): fills the entire window.
+ * - Non-desktop: centers the preset dimensions within the window, clamping to window size.
+ * - If window is smaller than or equal to the preset, fills the window.
+ */
+export function computeSiteViewBounds(
+  preset: string,
+  windowWidth: number,
+  windowHeight: number,
+): Rectangle {
+  if (preset === 'desktop' || !(preset in VIEWPORT_PRESETS)) {
+    return { x: 0, y: 0, width: windowWidth, height: windowHeight };
+  }
+
+  const vp = VIEWPORT_PRESETS[preset as ViewportPreset];
+
+  // If window is smaller than or equal to the preset in both dimensions, fill window
+  if (windowWidth <= vp.width && windowHeight <= vp.height) {
+    return { x: 0, y: 0, width: windowWidth, height: windowHeight };
+  }
+
+  const w = Math.min(vp.width, windowWidth);
+  const h = Math.min(vp.height, windowHeight);
+  const x = Math.round((windowWidth - w) / 2);
+  const y = Math.round((windowHeight - h) / 2);
+
+  return { x, y, width: w, height: h };
+}
+
+/**
+ * Animate a view's bounds from `from` to `to` over `durationMs` milliseconds.
+ * Uses setTimeout loop (main process has no requestAnimationFrame -- Pitfall 6).
+ * Ease-in-out curve: t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2) / 2
+ */
+export function animateBounds(
+  view: { setBounds: (r: Rectangle) => void },
+  from: Rectangle,
+  to: Rectangle,
+  durationMs: number,
+): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const startTime = Date.now();
+
+    function easeInOut(t: number): number {
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    function lerp(a: number, b: number, t: number): number {
+      return Math.round(a + (b - a) * t);
+    }
+
+    function step(): void {
+      const elapsed = Date.now() - startTime;
+      const rawT = Math.min(elapsed / durationMs, 1);
+      const t = easeInOut(rawT);
+
+      const bounds: Rectangle = {
+        x: lerp(from.x, to.x, t),
+        y: lerp(from.y, to.y, t),
+        width: lerp(from.width, to.width, t),
+        height: lerp(from.height, to.height, t),
+      };
+
+      view.setBounds(bounds);
+
+      if (rawT >= 1) {
+        resolve();
+      } else {
+        setTimeout(step, 16);
+      }
+    }
+
+    step();
+  });
+}
+
 export interface WindowComponents {
   window: BaseWindow;
   siteView: WebContentsView;
@@ -15,6 +110,10 @@ export interface WindowComponents {
   /** Store user-chosen sidebar position (persists across state changes) */
   setSidebarUserPosition: (x: number, y: number) => void;
   getSidebarUserPosition: () => { x: number; y: number } | null;
+  /** Switch viewport preset and animate site view bounds */
+  setViewport: (preset: ViewportPreset) => Promise<void>;
+  /** Get current viewport preset */
+  getViewport: () => ViewportPreset;
 }
 
 /**
@@ -38,6 +137,10 @@ export function createMainWindow(
     center: true,
     title: `claw-design \u2014 ${projectName} \u2014 localhost:${port}`,
   });
+
+  // D-06: Dark surround background for viewport constraining
+  // When siteView doesn't cover full area, this dark fill shows through
+  win.contentView.setBackgroundColor('#1a1a1a');
 
   // Site view (bottom layer) -- ELEC-01: secure webPreferences
   const siteView = new WebContentsView({
@@ -102,6 +205,9 @@ export function createMainWindow(
   let toolbarPosition: { x: number; y: number } | null = null;
   let sidebarUserPosition: { x: number; y: number } | null = null;
 
+  // Track current viewport preset (ELEC-03)
+  let currentViewport: ViewportPreset = 'desktop';
+
   function applySidebarBounds(): void {
     const { width, height } = win.getContentBounds();
     const SIDEBAR_WIDTH = 300;
@@ -157,16 +263,29 @@ export function createMainWindow(
   }
 
   // D-13: Auto-sync all views to window content area on resize
-  // Sidebar floats on top — site and overlay always use full width
+  // Sidebar floats on top -- overlay always full window, site view respects viewport preset
   function syncBounds(): void {
     const { width, height } = win.getContentBounds();
-    siteView.setBounds({ x: 0, y: 0, width, height });
+    const siteBounds = computeSiteViewBounds(currentViewport, width, height);
+    siteView.setBounds(siteBounds);
     if (overlayIsActive) {
       overlayView.setBounds({ x: 0, y: 0, width, height });
     } else {
       setOverlayInactive(overlayView, win);
     }
     applySidebarBounds();
+  }
+
+  /** Switch viewport preset and animate site view bounds (ELEC-03) */
+  async function setViewportImpl(preset: ViewportPreset): Promise<void> {
+    if (!VIEWPORT_PRESETS[preset]) return;
+    const { width, height } = win.getContentBounds();
+    const from = siteView.getBounds();
+    currentViewport = preset;
+    const to = computeSiteViewBounds(preset, width, height);
+    await animateBounds(siteView, from, to, 250);
+    // Notify overlay renderer of the change
+    overlayView.webContents.send('viewport:changed', { preset });
   }
 
   win.on('resize', syncBounds);
@@ -184,6 +303,8 @@ export function createMainWindow(
     getToolbarPosition: () => toolbarPosition,
     setSidebarUserPosition: (x: number, y: number) => { sidebarUserPosition = { x, y }; },
     getSidebarUserPosition: () => sidebarUserPosition,
+    setViewport: setViewportImpl,
+    getViewport: () => currentViewport,
   };
 }
 
@@ -199,9 +320,9 @@ export function setOverlayInactive(
 ): void {
   const { width, height } = win.getContentBounds();
   // Toolbar pill dimensions + margin from window edge
-  // 3 items * 36px + 2 gaps * 4px + padding 20px = 136px
+  // 6 items * 36px = 216, 5 gaps * 4px = 20, divider 9px (1px + 4px*2), padding 20px = 265px
   const toolbarWidth = 52;
-  const toolbarHeight = 136;
+  const toolbarHeight = 265;
   const margin = 16;
   const viewW = toolbarWidth + margin;
   const viewH = toolbarHeight + margin;

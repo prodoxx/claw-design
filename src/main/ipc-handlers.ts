@@ -3,6 +3,7 @@ import {
   setOverlayActive,
   setOverlayInactive,
   type WindowComponents,
+  type ViewportPreset,
 } from './window.js';
 import { captureRegion, type CSSRect } from './capture.js';
 import {
@@ -118,6 +119,15 @@ export function registerIpcHandlers(
       return taskId;
     },
   );
+
+  // --- Viewport IPC handler (ELEC-03, T-05-02) ---
+
+  // Whitelist validate preset against known values before calling setViewport
+  ipcMain.handle('viewport:set', async (_event, data: { preset: string }) => {
+    const validPresets = ['desktop', 'tablet', 'mobile'];
+    if (!validPresets.includes(data.preset)) return;
+    await components.setViewport(data.preset as ViewportPreset);
+  });
 
   // --- Sidebar IPC handlers ---
 

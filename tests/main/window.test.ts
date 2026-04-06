@@ -16,6 +16,7 @@ function createMockWebContents() {
 function createMockContentView() {
   return {
     addChildView: vi.fn(),
+    setBackgroundColor: vi.fn(),
   };
 }
 
@@ -36,6 +37,7 @@ function createMockWebContentsView() {
   const instance = {
     webContents: createMockWebContents(),
     setBounds: vi.fn(),
+    getBounds: vi.fn().mockReturnValue({ x: 0, y: 0, width: 1280, height: 800 }),
     setBackgroundColor: vi.fn(),
   };
   return instance;
@@ -199,9 +201,9 @@ describe('setOverlayInactive', () => {
 
     expect(mockOverlay.setBounds).toHaveBeenCalledWith({
       x: 1212, // 1280 - 52 - 16
-      y: 648,  // 800 - 136 - 16
+      y: 519,  // 800 - 265 - 16
       width: 68,  // 52 + 16 margin
-      height: 152, // 136 + 16 margin
+      height: 281, // 265 + 16 margin
     });
   });
 });

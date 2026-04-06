@@ -84,6 +84,15 @@ const overlayAPI = {
   /** Set absolute toolbar position (used to restore saved position) */
   setToolbarPosition: (x: number, y: number): Promise<void> =>
     ipcRenderer.invoke('overlay:set-toolbar-position', { x, y }),
+
+  /** Switch viewport preset (ELEC-03) */
+  setViewport: (preset: string): Promise<void> =>
+    ipcRenderer.invoke('viewport:set', { preset }),
+
+  /** Listen for viewport changes from main process (sync active state) */
+  onViewportChanged: (callback: (data: { preset: string }) => void): void => {
+    ipcRenderer.on('viewport:changed', (_event, data) => callback(data));
+  },
 };
 
 contextBridge.exposeInMainWorld('claw', overlayAPI);
