@@ -96,12 +96,15 @@ Plans:
   1. User can switch between desktop, tablet, and mobile viewport sizes within the Electron window
   2. `npm install -g claw-design && clawdesign start` works end-to-end on a clean machine
   3. Error messages throughout the tool are human-readable with clear recovery actions (not stack traces or transport internals)
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md -- Viewport switching: bounds computation, animation, IPC, toolbar buttons
+- [ ] 05-02-PLAN.md -- Pre-flight checks (Node version, Electron binary) and --version flag
+- [ ] 05-03-PLAN.md -- Toast notification system and dev server crash in-window alert
+- [ ] 05-04-PLAN.md -- Toolbar tooltips and branded splash screen
+- [ ] 05-05-PLAN.md -- npm packaging, README, LICENSE, and distribution files
 
 ## Progress
 
@@ -114,4 +117,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Electron Shell | 0/3 | Not started | - |
 | 3. Selection Overlay & Capture | 0/3 | Not started | - |
 | 4. Claude Code Integration | 0/3 | Not started | - |
-| 5. Polish & Distribution | 0/2 | Not started | - |
+| 5. Polish & Distribution | 0/5 | Not started | - |
