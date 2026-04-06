@@ -31,7 +31,6 @@ vi.mock('../../src/cli/utils/preflight.js', () => ({
 }));
 
 vi.mock('../../src/cli/utils/electron.js', () => ({
-  buildElectron: vi.fn(),
   spawnElectron: vi.fn(),
 }));
 
@@ -66,7 +65,7 @@ import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionE
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../../src/cli/utils/port-detect.js';
 import { isClaudeInstalled, getClaudeAuthStatus } from '../../src/cli/utils/claude.js';
 import { checkNodeVersion, checkElectronBinary } from '../../src/cli/utils/preflight.js';
-import { buildElectron, spawnElectron } from '../../src/cli/utils/electron.js';
+import { spawnElectron } from '../../src/cli/utils/electron.js';
 import { registerShutdownHandlers } from '../../src/cli/utils/process.js';
 import { createSpinner, printReady, printError } from '../../src/cli/utils/output.js';
 import { startCommand } from '../../src/cli/commands/start.js';
@@ -81,7 +80,6 @@ const mockIsClaudeInstalled = vi.mocked(isClaudeInstalled);
 const mockGetClaudeAuthStatus = vi.mocked(getClaudeAuthStatus);
 const mockCheckNodeVersion = vi.mocked(checkNodeVersion);
 const mockCheckElectronBinary = vi.mocked(checkElectronBinary);
-const mockBuildElectron = vi.mocked(buildElectron);
 const mockSpawnElectron = vi.mocked(spawnElectron);
 const mockRegisterShutdownHandlers = vi.mocked(registerShutdownHandlers);
 const mockCreateSpinner = vi.mocked(createSpinner);
@@ -182,7 +180,6 @@ describe('startCommand', () => {
     expect(mockDetectDevServerScript).toHaveBeenCalledWith(process.cwd());
     expect(mockSpawnDevServer).toHaveBeenCalled();
     expect(mockWaitForPort).toHaveBeenCalledWith(3000, { timeout: 30_000 });
-    expect(mockBuildElectron).toHaveBeenCalled();
     expect(mockSpawnElectron).toHaveBeenCalledWith('http://localhost:3000', 'test-project');
     expect(mockRegisterShutdownHandlers).toHaveBeenCalledWith(
       expect.objectContaining({

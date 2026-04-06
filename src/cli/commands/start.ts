@@ -2,7 +2,7 @@ import { detectDevServerScript, detectPackageManager, spawnDevServer, DetectionE
 import { extractPortFromOutput, waitForPort, getProcessOnPort } from '../utils/port-detect.js';
 import { isClaudeInstalled, getClaudeAuthStatus } from '../utils/claude.js';
 import { checkNodeVersion, checkElectronBinary } from '../utils/preflight.js';
-import { buildElectron, spawnElectron } from '../utils/electron.js';
+import { spawnElectron } from '../utils/electron.js';
 import { registerShutdownHandlers } from '../utils/process.js';
 import { createSpinner, printReady, printError } from '../utils/output.js';
 import pc from 'picocolors';
@@ -198,23 +198,11 @@ export async function startCommand(options: StartOptions): Promise<void> {
     process.exit(1);
   }
 
-  // Step 6: Build and launch Electron window (per CLI-06)
-  // Claude Code session is now managed by AgentManager inside the Electron main process.
-  // We pass CLAW_PROJECT_DIR as env var for AgentManager to use.
-  const electronSpinner = createSpinner('Building Electron app...');
-  try {
-    buildElectron();
-    electronSpinner.text = 'Opening Electron window...';
-  } catch (err) {
-    electronSpinner.fail('Electron build failed');
-    printError(
-      'Electron build failed',
-      err instanceof Error ? err.message : String(err),
-      'Try: npx electron-vite build --verbose'
-    );
-    process.exit(1);
-  }
-
+  // Step 6: Launch Electron window (per CLI-06)
+  // Pre-built by `npm run build` / prepublishOnly hook (D-18).
+  // No runtime build needed -- out/ is included in the npm package.
+  // Claude Code session is managed by AgentManager inside the Electron main process.
+  const electronSpinner = createSpinner('Opening Electron window...');
   const electronProcess = spawnElectron(`http://localhost:${port}`, projectName);
   electronSpinner.succeed(`Electron window opened ${pc.dim(`localhost:${port}`)}`);
 
