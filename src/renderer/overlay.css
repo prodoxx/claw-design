@@ -356,6 +356,26 @@ body.claw-overlay--active {
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* Tooltip (D-22) -- positioned to the left of toolbar buttons */
+.claw-tooltip {
+  position: fixed;
+  z-index: 10000;
+  background: rgba(10, 10, 10, 0.95);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.36;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  max-width: 160px;
+  white-space: nowrap;
+  pointer-events: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* Accessibility: reduced motion */
 @media (prefers-reduced-motion: reduce) {
 

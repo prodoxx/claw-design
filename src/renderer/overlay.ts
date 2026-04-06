@@ -197,11 +197,18 @@ if (isInBrowser()) {
   let state: SelectionState = { ...INITIAL_STATE };
   let elemHoverRafPending = false;
 
+  // Forward-declared so tooltip code (defined later) can be called from dispatch
+  let onModeChange: (() => void) | null = null;
+
   function dispatch(event: SelectionEvent): void {
     const prev = state;
     state = transition(state, event);
     if (state !== prev) {
       render(state);
+      // Hide tooltip when mode transitions away from inactive (D-22)
+      if (state.mode !== 'inactive' && onModeChange) {
+        onModeChange();
+      }
     }
   }
 
@@ -762,4 +769,67 @@ if (isInBrowser()) {
       updateViewportActiveState(data.preset);
     });
   }
+
+  // ============================================================
+  // Tooltips (D-22) -- hover delay, positioned left of toolbar
+  // ============================================================
+
+  const tooltipEl = document.getElementById('claw-tooltip');
+  let tooltipTimer: ReturnType<typeof setTimeout> | null = null;
+  let tooltipActiveBtn: HTMLElement | null = null;
+
+  function showTooltipForBtn(btn: HTMLElement): void {
+    if (!tooltipEl) return;
+    const text = btn.getAttribute('data-tooltip');
+    if (!text) return;
+
+    // Don't show during active selection modes (D-22: "Hidden while any selection mode is active")
+    if (state.mode !== 'inactive') return;
+
+    tooltipEl.textContent = text;
+    tooltipEl.hidden = false;
+    tooltipActiveBtn = btn;
+
+    // Position: left of the button, vertically centered, 8px gap
+    const btnRect = btn.getBoundingClientRect();
+    const tooltipRect = tooltipEl.getBoundingClientRect();
+    const left = btnRect.left - tooltipRect.width - 8;
+    const top = btnRect.top + (btnRect.height - tooltipRect.height) / 2;
+    tooltipEl.style.left = `${Math.max(4, left)}px`;
+    tooltipEl.style.top = `${Math.max(4, top)}px`;
+
+    // Set aria-describedby on the button
+    btn.setAttribute('aria-describedby', 'claw-tooltip');
+  }
+
+  function hideTooltip(): void {
+    if (!tooltipEl) return;
+    tooltipEl.hidden = true;
+    if (tooltipTimer) {
+      clearTimeout(tooltipTimer);
+      tooltipTimer = null;
+    }
+    if (tooltipActiveBtn) {
+      tooltipActiveBtn.removeAttribute('aria-describedby');
+      tooltipActiveBtn = null;
+    }
+  }
+
+  // Wire tooltip events on all toolbar buttons with data-tooltip
+  const tooltipButtons = document.querySelectorAll('[data-tooltip]');
+  for (const btn of tooltipButtons) {
+    btn.addEventListener('mouseenter', () => {
+      // 400ms hover delay (D-22: prevents flicker during fast mouse movement)
+      tooltipTimer = setTimeout(() => {
+        showTooltipForBtn(btn as HTMLElement);
+      }, 400);
+    });
+
+    btn.addEventListener('mouseleave', () => {
+      hideTooltip();
+    });
+  }
+
+  // Wire tooltip hide into dispatch mode-change callback
+  onModeChange = hideTooltip;
 }
