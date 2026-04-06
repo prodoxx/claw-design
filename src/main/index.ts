@@ -34,6 +34,45 @@ app.whenReady().then(() => {
   // Start with overlay in inactive state (D-12)
   setOverlayInactive(components.overlayView, components.window);
 
+  // ============================================================
+  // Dev server crash detection (D-11): monitor siteView for load failures.
+  // When the dev server dies, the siteView fails to load/navigate.
+  // Trigger an in-window toast notification so the user knows.
+  // ============================================================
+
+  let devServerCrashNotified = false;
+
+  components.siteView.webContents.on('did-fail-load', (_event, _errorCode, _errorDescription, validatedURL) => {
+    // Only notify for the localhost URL (not other resources)
+    if (!validatedURL.includes('localhost') && !validatedURL.includes('127.0.0.1')) return;
+    // Only notify once per crash (avoid spam on auto-retry) -- T-05-06
+    if (devServerCrashNotified) return;
+    devServerCrashNotified = true;
+
+    // Send toast to overlay renderer
+    components.overlayView.webContents.send('toast:show', {
+      id: 'dev-server-crash',
+      severity: 'error' as const,
+      title: 'Dev server disconnected',
+      message: 'The dev server process exited unexpectedly. Restart clawdesign to continue.',
+      persistent: true,
+    });
+  });
+
+  // Also detect when site page crashes or becomes unresponsive
+  components.siteView.webContents.on('render-process-gone', (_event, _details) => {
+    if (devServerCrashNotified) return;
+    devServerCrashNotified = true;
+
+    components.overlayView.webContents.send('toast:show', {
+      id: 'dev-server-crash',
+      severity: 'error' as const,
+      title: 'Connection lost',
+      message: `Cannot reach localhost:${port}. Check if the dev server is still running.`,
+      persistent: true,
+    });
+  });
+
   // Handle window close
   components.window.on('closed', () => {
     app.quit();

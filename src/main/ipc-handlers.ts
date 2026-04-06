@@ -129,6 +129,13 @@ export function registerIpcHandlers(
     await components.setViewport(data.preset as ViewportPreset);
   });
 
+  // --- Toast IPC handler (D-08, D-09) ---
+
+  // Toast dismiss from main process (programmatic dismiss via IPC)
+  ipcMain.handle('toast:dismiss', async (_event, data: { id: string }) => {
+    components.overlayView.webContents.send('toast:dismiss', data);
+  });
+
   // --- Sidebar IPC handlers ---
 
   // Sidebar expand (renderer -> main)
