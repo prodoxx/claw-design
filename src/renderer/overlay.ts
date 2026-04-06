@@ -705,4 +705,46 @@ if (isInBrowser()) {
       }
     }
   }
+
+  // ============================================================
+  // Viewport switching (D-01 through D-07, ELEC-03)
+  // ============================================================
+
+  let activeViewport: string = 'desktop';
+
+  const viewportButtons: Record<string, HTMLElement | null> = {
+    desktop: document.getElementById('claw-viewport-desktop-btn'),
+    tablet: document.getElementById('claw-viewport-tablet-btn'),
+    mobile: document.getElementById('claw-viewport-mobile-btn'),
+  };
+
+  function updateViewportActiveState(preset: string): void {
+    for (const [key, btn] of Object.entries(viewportButtons)) {
+      if (!btn) continue;
+      if (key === preset) {
+        btn.classList.add('claw-toolbar-btn--active');
+      } else {
+        btn.classList.remove('claw-toolbar-btn--active');
+      }
+    }
+    activeViewport = preset;
+  }
+
+  // Click handlers for viewport buttons
+  for (const [preset, btn] of Object.entries(viewportButtons)) {
+    if (!btn) continue;
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (activeViewport === preset) return; // Already active
+      updateViewportActiveState(preset);
+      await window.claw.setViewport(preset);
+    });
+  }
+
+  // Listen for viewport changes from main process (sync state)
+  if (window.claw?.onViewportChanged) {
+    window.claw.onViewportChanged((data: { preset: string }) => {
+      updateViewportActiveState(data.preset);
+    });
+  }
 }

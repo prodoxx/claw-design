@@ -71,6 +71,15 @@ body.claw-overlay--active {
   background: rgba(255, 255, 255, 0.15);
 }
 
+/* Toolbar divider -- separates selection controls from viewport controls (D-01) */
+.claw-toolbar-divider {
+  width: 24px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 4px 0;
+  flex-shrink: 0;
+}
+
 /* Selection rectangle (freeform drawing) -- per D-05, D-07, UI spec selection accent detail */
 .claw-selection-rect {
   position: absolute;
