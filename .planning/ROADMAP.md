@@ -120,8 +120,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md -- Wire retry-prefill IPC flow (ipc-handlers.ts + overlay.ts prefill handler enhancement)
-- [ ] 06-02-PLAN.md -- Dead code removal (buildElectron, CLAW_CWD, preload/index.ts, renderer/index.html) and test updates
+- [x] 06-01-PLAN.md -- Wire retry-prefill IPC flow (ipc-handlers.ts + overlay.ts prefill handler enhancement)
+- [x] 06-02-PLAN.md -- Dead code removal (buildElectron, CLAW_CWD, preload/index.ts, renderer/index.html) and test updates
 
 ### Phase 7: Open Source Readiness
 **Goal**: Prepare claw-design for public release under prodoxx GitHub with proper branding, ownership, and community files
