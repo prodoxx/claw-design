@@ -109,6 +109,11 @@ const overlayAPI = {
   onToastDismiss: (callback: (data: { id: string }) => void): void => {
     ipcRenderer.on('toast:dismiss', (_event, data) => callback(data));
   },
+
+  /** Listen for site load complete event from main process */
+  onSiteLoaded: (callback: () => void): void => {
+    ipcRenderer.on('site:loaded', () => callback());
+  },
 };
 
 contextBridge.exposeInMainWorld('claw', overlayAPI);

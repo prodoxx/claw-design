@@ -80,6 +80,23 @@ body.claw-overlay--active {
   flex-shrink: 0;
 }
 
+/* Collapsible viewport group -- hidden by default, expands toolbar on toggle */
+.claw-viewport-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 200ms ease-out, opacity 150ms ease-out;
+}
+
+.claw-viewport-group--open {
+  max-height: 132px;
+  opacity: 1;
+}
+
 /* Selection rectangle (freeform drawing) -- per D-05, D-07, UI spec selection accent detail */
 .claw-selection-rect {
   position: absolute;
@@ -121,6 +138,12 @@ body.claw-overlay--active {
 .claw-toolbar-btn--active {
   color: rgba(138, 180, 248, 1) !important;
   background: rgba(138, 180, 248, 0.15) !important;
+}
+
+/* Viewport toggle "expanded" state -- subtler than selection active */
+.claw-toolbar-btn--toggle-open {
+  color: rgba(255, 255, 255, 0.75) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Instruction input bar — per D-09, UI spec */
@@ -376,6 +399,37 @@ body.claw-overlay--active {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Loading indicator -- centered spinner while site loads */
+.claw-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.claw-loading--hidden {
+  display: none;
+}
+
+.claw-loading__spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid transparent;
+  border-top-color: rgba(138, 180, 248, 0.7);
+  border-radius: 50%;
+  animation: claw-spin 800ms linear infinite;
+}
+
+@keyframes claw-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Accessibility: reduced motion */
 @media (prefers-reduced-motion: reduce) {
 
@@ -386,5 +440,10 @@ body.claw-overlay--active {
   .claw-toast,
   .claw-toast--exiting {
     transition: none !important;
+  }
+
+  .claw-loading__spinner {
+    animation: none;
+    border-top-color: rgba(138, 180, 248, 0.5);
   }
 }

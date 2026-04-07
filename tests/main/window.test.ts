@@ -10,6 +10,7 @@ function createMockWebContents() {
     on: vi.fn(),
     send: vi.fn(),
     setWindowOpenHandler: vi.fn(),
+    openDevTools: vi.fn(),
   };
 }
 
@@ -64,6 +65,7 @@ vi.mock('electron', () => {
       whenReady: vi.fn().mockResolvedValue(undefined),
       on: vi.fn(),
       quit: vi.fn(),
+      isPackaged: false,
     },
     ipcMain: { handle: vi.fn() },
     shell: { openExternal: vi.fn() },
@@ -219,10 +221,10 @@ describe('setOverlayInactive', () => {
     setOverlayInactive(mockOverlay as unknown as Parameters<typeof setOverlayInactive>[0], mockWin as unknown as Parameters<typeof setOverlayInactive>[1]);
 
     expect(mockOverlay.setBounds).toHaveBeenCalledWith({
-      x: 1212, // 1280 - 52 - 16
-      y: 519,  // 800 - 265 - 16
-      width: 68,  // 52 + 16 margin
-      height: 281, // 265 + 16 margin
+      x: 1052, // 1280 - 52 - 16 - 160 (tooltip allowance)
+      y: 479,  // 800 - 305 - 16
+      width: 228,  // 52 + 16 margin + 160 tooltip allowance
+      height: 321, // 305 + 16 margin
     });
   });
 });

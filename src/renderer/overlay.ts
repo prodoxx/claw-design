@@ -329,11 +329,30 @@ if (isInBrowser()) {
   // --- Event listeners ---
 
   // Activate/deactivate overlay hit surface
+  const toolbar = document.getElementById('claw-toolbar');
+
   function activateOverlaySurface(): void {
+    // Pin toolbar at its current screen position before overlay expands
+    if (toolbar) {
+      const rect = toolbar.getBoundingClientRect();
+      toolbar.style.position = 'fixed';
+      toolbar.style.left = `${rect.left}px`;
+      toolbar.style.top = `${rect.top}px`;
+      toolbar.style.bottom = 'auto';
+      toolbar.style.right = 'auto';
+    }
     document.body.classList.add('claw-overlay--active');
   }
   function deactivateOverlaySurface(): void {
     document.body.classList.remove('claw-overlay--active');
+    // Restore default CSS positioning
+    if (toolbar) {
+      toolbar.style.position = '';
+      toolbar.style.left = '';
+      toolbar.style.top = '';
+      toolbar.style.bottom = '';
+      toolbar.style.right = '';
+    }
   }
 
   // Rectangle select button
@@ -733,12 +752,35 @@ if (isInBrowser()) {
   // ============================================================
 
   let activeViewport: string = 'desktop';
+  let viewportGroupOpen = false;
+
+  const viewportToggleBtn = document.getElementById('claw-viewport-toggle-btn');
+  const viewportGroup = document.getElementById('claw-viewport-group');
 
   const viewportButtons: Record<string, HTMLElement | null> = {
     desktop: document.getElementById('claw-viewport-desktop-btn'),
     tablet: document.getElementById('claw-viewport-tablet-btn'),
     mobile: document.getElementById('claw-viewport-mobile-btn'),
   };
+
+  function toggleViewportGroup(): void {
+    if (!viewportGroup) return;
+    viewportGroupOpen = !viewportGroupOpen;
+    if (viewportGroupOpen) {
+      viewportGroup.classList.add('claw-viewport-group--open');
+      viewportToggleBtn?.classList.add('claw-toolbar-btn--toggle-open');
+    } else {
+      viewportGroup.classList.remove('claw-viewport-group--open');
+      viewportToggleBtn?.classList.remove('claw-toolbar-btn--toggle-open');
+    }
+  }
+
+  if (viewportToggleBtn) {
+    viewportToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleViewportGroup();
+    });
+  }
 
   function updateViewportActiveState(preset: string): void {
     for (const [key, btn] of Object.entries(viewportButtons)) {
@@ -760,6 +802,8 @@ if (isInBrowser()) {
       if (activeViewport === preset) return; // Already active
       updateViewportActiveState(preset);
       await window.claw.setViewport(preset);
+      // Collapse the group after selection
+      if (viewportGroupOpen) toggleViewportGroup();
     });
   }
 
@@ -832,4 +876,15 @@ if (isInBrowser()) {
 
   // Wire tooltip hide into dispatch mode-change callback
   onModeChange = hideTooltip;
+
+  // ============================================================
+  // Loading indicator: hide when site finishes loading
+  // ============================================================
+
+  if (window.claw?.onSiteLoaded) {
+    window.claw.onSiteLoaded(() => {
+      const loadingEl = document.getElementById('claw-loading');
+      if (loadingEl) loadingEl.classList.add('claw-loading--hidden');
+    });
+  }
 }

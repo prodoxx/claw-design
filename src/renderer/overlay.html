@@ -86,8 +86,8 @@
     <!-- Viewport divider (D-01) -->
     <div class="claw-toolbar-divider" aria-hidden="true"></div>
 
-    <!-- Desktop viewport (D-03: 1280x800) -->
-    <button id="claw-viewport-desktop-btn" class="claw-toolbar-btn claw-toolbar-btn--active" aria-label="Desktop viewport" data-viewport="desktop" data-tooltip="Desktop (1280 x 800)">
+    <!-- Viewport toggle: single button that expands to show preset options -->
+    <button id="claw-viewport-toggle-btn" class="claw-toolbar-btn" aria-label="Viewport presets" data-tooltip="Viewports">
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
         <rect x="2" y="4" width="16" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
         <path d="M7 16H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -95,24 +95,36 @@
       </svg>
     </button>
 
-    <!-- Tablet viewport (D-03: 768x1024) -->
-    <button id="claw-viewport-tablet-btn" class="claw-toolbar-btn" aria-label="Tablet viewport" data-viewport="tablet" data-tooltip="Tablet (768 x 1024)">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
-        <circle cx="10" cy="16" r="0.75" fill="currentColor"/>
-      </svg>
-    </button>
-
-    <!-- Mobile viewport (D-03: 375x812) -->
-    <button id="claw-viewport-mobile-btn" class="claw-toolbar-btn" aria-label="Mobile viewport" data-viewport="mobile" data-tooltip="Mobile (375 x 812)">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-        <rect x="5" y="2" width="10" height="16" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
-        <path d="M8.5 16H11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
-    </button>
+    <!-- Collapsible viewport preset buttons (hidden by default) -->
+    <div id="claw-viewport-group" class="claw-viewport-group">
+      <button id="claw-viewport-desktop-btn" class="claw-toolbar-btn claw-toolbar-btn--active" aria-label="Desktop viewport" data-viewport="desktop" data-tooltip="Desktop (1280 x 800)">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="4" width="16" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+          <path d="M7 16H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M10 14V16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button id="claw-viewport-tablet-btn" class="claw-toolbar-btn" aria-label="Tablet viewport" data-viewport="tablet" data-tooltip="Tablet (768 x 1024)">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="4" y="2" width="12" height="16" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+          <circle cx="10" cy="16" r="0.75" fill="currentColor"/>
+        </svg>
+      </button>
+      <button id="claw-viewport-mobile-btn" class="claw-toolbar-btn" aria-label="Mobile viewport" data-viewport="mobile" data-tooltip="Mobile (375 x 812)">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="5" y="2" width="10" height="16" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/>
+          <path d="M8.5 16H11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
   </div>
   <!-- Tooltip element (D-22) -->
   <div id="claw-tooltip" class="claw-tooltip" role="tooltip" hidden></div>
+
+  <!-- Loading indicator: visible until site finishes loading -->
+  <div id="claw-loading" class="claw-loading">
+    <div class="claw-loading__spinner" aria-label="Loading site"></div>
+  </div>
 
   <script type="module" src="./overlay.ts"></script>
 </body>

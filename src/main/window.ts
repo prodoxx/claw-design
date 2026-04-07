@@ -1,4 +1,4 @@
-import { BaseWindow, WebContentsView } from 'electron';
+import { app, BaseWindow, WebContentsView } from 'electron';
 import path from 'node:path';
 
 // --- Viewport presets ---
@@ -238,6 +238,11 @@ export function createMainWindow(
     path.join(__dirname, '../renderer/overlay.html'),
   );
 
+  // Open DevTools for overlay in development
+  if (!app.isPackaged) {
+    overlayView.webContents.openDevTools({ mode: 'detach' });
+  }
+
   // Sidebar view (topmost layer) -- separate WebContentsView for persistence across overlay bounds toggle
   const sidebarView = new WebContentsView({
     webPreferences: {
@@ -382,21 +387,25 @@ export function setOverlayInactive(
 ): void {
   const { width, height } = win.getContentBounds();
   // Toolbar pill dimensions + margin from window edge
-  // 6 items * 36px = 216, 5 gaps * 4px = 20, divider 9px (1px + 4px*2), padding 20px = 265px
+  // Must accommodate expanded viewport group (3 extra buttons when open):
+  // 7 items * 36px = 252, 6 gaps * 4px = 24, divider 9px, padding 20px = 305px
   const toolbarWidth = 52;
-  const toolbarHeight = 265;
+  const toolbarHeight = 305;
   const margin = 16;
-  const viewW = toolbarWidth + margin;
+  // Extra width for tooltips that appear to the left of toolbar buttons
+  // Longest tooltip "Desktop (1280 x 800)" ~140px + 8px gap = 148px
+  const tooltipAllowance = 160;
+  const viewW = toolbarWidth + margin + tooltipAllowance;
   const viewH = toolbarHeight + margin;
 
   const userPos = components?.getToolbarPosition?.();
   if (userPos) {
-    const x = Math.max(0, Math.min(width - viewW, userPos.x));
+    const x = Math.max(0, Math.min(width - viewW, userPos.x - tooltipAllowance));
     const y = Math.max(0, Math.min(height - viewH, userPos.y));
     overlayView.setBounds({ x, y, width: viewW, height: viewH });
   } else {
     overlayView.setBounds({
-      x: width - toolbarWidth - margin,
+      x: width - toolbarWidth - margin - tooltipAllowance,
       y: height - toolbarHeight - margin,
       width: viewW,
       height: viewH,

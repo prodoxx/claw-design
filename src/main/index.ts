@@ -16,6 +16,11 @@ app.whenReady().then(() => {
   // No minimum display time -- if site loads instantly, splash is replaced.
   components.navigateToSite();
 
+  // Notify overlay when site finishes loading (hides loading spinner)
+  components.siteView.webContents.on('did-finish-load', () => {
+    components.overlayView.webContents.send('site:loaded');
+  });
+
   // Setup navigation restriction (D-05, D-06)
   const allowedOrigin = new URL(url).origin;
   setupNavigation(components.siteView, allowedOrigin);
