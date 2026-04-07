@@ -162,9 +162,31 @@ export function registerIpcHandlers(
     return agentManager.getTaskLogs(data.id);
   });
 
-  // Sidebar task retry -- re-submit with original context (no re-selection needed)
+  // Sidebar task retry -- prefill overlay with original instruction, activate selection mode
+  // User can edit instruction and make a new selection before re-submitting (gap closure: retry-prefill-flow)
   ipcMain.handle('sidebar:task-retry', async (_event, data: { id: string }) => {
-    await agentManager.retryTask(data.id);
+    const task = agentManager.getTask(data.id);
+    if (!task) return;
+
+    const instruction = task.instruction;
+
+    // Dismiss the old error task (instruction is preserved in prefilled textarea)
+    agentManager.dismissTask(data.id);
+    // If no tasks remain after dismissal, hide sidebar
+    if (agentManager.getAllTasks().length === 0) {
+      components.setSidebarState('hidden');
+    }
+
+    // Prefill the overlay textarea with the original instruction
+    components.overlayView.webContents.send('overlay:prefill-instruction', {
+      instruction,
+    });
+
+    // Activate overlay for new selection (expands bounds to full window, minimizes sidebar)
+    setOverlayActive(components.overlayView, components.window, components);
+
+    // Enter rect-idle selection mode (default, more general than elem-idle)
+    components.overlayView.webContents.send('overlay:mode-change', 'selection');
   });
 
   // Sidebar task undo -- submit a new task asking Claude to revert the change
