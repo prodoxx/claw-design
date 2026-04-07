@@ -100,11 +100,11 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 05-01-PLAN.md -- Viewport switching: bounds computation, animation, IPC, toolbar buttons
-- [ ] 05-02-PLAN.md -- Pre-flight checks (Node version, Electron binary) and --version flag
-- [ ] 05-03-PLAN.md -- Toast notification system and dev server crash in-window alert
-- [ ] 05-04-PLAN.md -- Toolbar tooltips and branded splash screen
-- [ ] 05-05-PLAN.md -- npm packaging, README, LICENSE, and distribution files
+- [x] 05-01-PLAN.md -- Viewport switching: bounds computation, animation, IPC, toolbar buttons
+- [x] 05-02-PLAN.md -- Pre-flight checks (Node version, Electron binary) and --version flag
+- [x] 05-03-PLAN.md -- Toast notification system and dev server crash in-window alert
+- [x] 05-04-PLAN.md -- Toolbar tooltips and branded splash screen
+- [x] 05-05-PLAN.md -- npm packaging, README, LICENSE, and distribution files
 
 ## Progress
 
