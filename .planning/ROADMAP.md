@@ -117,7 +117,11 @@ Plans:
   1. Sidebar retry action sends `overlay:prefill-instruction` IPC to populate the overlay textarea with the previous instruction
   2. User can edit the prefilled instruction before re-submitting
   3. Dead code removed: `buildElectron` export, `CLAW_CWD` env var, stub `preload/index.ts`, placeholder `renderer/index.html`
-**Plans**: 0 plans
+**Plans**: 2 plans
+
+Plans:
+- [ ] 06-01-PLAN.md -- Wire retry-prefill IPC flow (ipc-handlers.ts + overlay.ts prefill handler enhancement)
+- [ ] 06-02-PLAN.md -- Dead code removal (buildElectron, CLAW_CWD, preload/index.ts, renderer/index.html) and test updates
 
 ### Phase 7: Open Source Readiness
 **Goal**: Prepare claw-design for public release under prodoxx GitHub with proper branding, ownership, and community files
@@ -144,5 +148,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 3. Selection Overlay & Capture | 0/3 | Not started | - |
 | 4. Claude Code Integration | 0/3 | Not started | - |
 | 5. Polish & Distribution | 0/5 | Not started | - |
-| 6. Wire Retry Prefill & Tech Debt Cleanup | 0/0 | Not started | - |
+| 6. Wire Retry Prefill & Tech Debt Cleanup | 0/2 | Not started | - |
 | 7. Open Source Readiness | 0/0 | Not started | - |
