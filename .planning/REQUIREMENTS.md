@@ -10,17 +10,17 @@ Requirements for initial release. Each maps to roadmap phases.
 ### CLI
 
 - [x] **CLI-01**: User can run `clawdesign start` in a project directory to launch the full workflow
-- [ ] **CLI-02**: CLI auto-detects dev server start command from package.json (dev > start > serve)
-- [ ] **CLI-03**: User can override dev server command with `--cmd` flag
+- [x] **CLI-02**: CLI auto-detects dev server start command from package.json (dev > start > serve)
+- [x] **CLI-03**: User can override dev server command with `--cmd` flag
 - [x] **CLI-04**: CLI spawns dev server as child process and detects when it's ready (port listening)
 - [x] **CLI-05**: CLI spawns Claude Code session pointed at the current codebase
-- [ ] **CLI-06**: CLI opens Electron window loading the dev server's localhost URL
+- [x] **CLI-06**: CLI opens Electron window loading the dev server's localhost URL
 
 ### Electron Window
 
 - [x] **ELEC-01**: Electron window loads user's localhost URL with proper security isolation (sandbox, contextIsolation)
 - [x] **ELEC-02**: Electron window renders selection overlay on top of the user's site content
-- [ ] **ELEC-03**: User can switch between desktop, tablet, and mobile viewport sizes
+- [x] **ELEC-03**: User can switch between desktop, tablet, and mobile viewport sizes
 
 ### Selection
 
@@ -37,9 +37,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Instruction
 
-- [ ] **INST-01**: After selection, an input field appears where the user can type their change instruction
-- [ ] **INST-02**: User can submit the instruction to send it to Claude Code
-- [ ] **INST-03**: Input field supports multi-line text for complex instructions
+- [x] **INST-01**: After selection, an input field appears where the user can type their change instruction
+- [x] **INST-02**: User can submit the instruction to send it to Claude Code
+- [x] **INST-03**: Input field supports multi-line text for complex instructions
 
 ### Claude Integration
 
@@ -117,14 +117,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CLI-01 | Phase 1 | Complete |
-| CLI-02 | Phase 1 | Pending |
-| CLI-03 | Phase 1 | Pending |
+| CLI-02 | Phase 1 | Complete |
+| CLI-03 | Phase 1 | Complete |
 | CLI-04 | Phase 1 | Complete |
 | CLI-05 | Phase 1 | Complete |
-| CLI-06 | Phase 2 | Pending |
+| CLI-06 | Phase 2 | Complete |
 | ELEC-01 | Phase 2 | Complete |
 | ELEC-02 | Phase 2 | Complete |
-| ELEC-03 | Phase 5 | Pending |
+| ELEC-03 | Phase 5 | Complete |
 | SEL-01 | Phase 3 | Complete |
 | SEL-02 | Phase 3 | Complete |
 | SEL-03 | Phase 3 | Complete |
@@ -132,9 +132,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAP-01 | Phase 3 | Complete |
 | CAP-02 | Phase 3 | Complete |
 | CAP-03 | Phase 3 | Complete |
-| INST-01 | Phase 3 | Pending |
-| INST-02 | Phase 3 | Pending |
-| INST-03 | Phase 3 | Pending |
+| INST-01 | Phase 3 | Complete |
+| INST-02 | Phase 3 | Complete |
+| INST-03 | Phase 3 | Complete |
 | CLAUD-01 | Phase 4 | Complete |
 | CLAUD-02 | Phase 4 | Complete |
 | CLAUD-03 | Phase 4 | Complete |
@@ -152,4 +152,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-03*
-*Last updated: 2026-04-03 after roadmap creation*
+*Last updated: 2026-04-07 after milestone audit gap closure*

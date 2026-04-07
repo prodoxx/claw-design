@@ -17,6 +17,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Selection Overlay & Capture** - Visual selection, screenshot capture, DOM extraction, and instruction input
 - [ ] **Phase 4: Claude Code Integration** - Send context to Claude Code, receive edits, show status feedback
 - [ ] **Phase 5: Polish & Distribution** - Viewport switching, error UX, cross-platform packaging
+- [ ] **Phase 6: Wire Retry Prefill & Tech Debt Cleanup** - Complete retry prefill flow, remove dead code
+- [ ] **Phase 7: Open Source Readiness** - Branding, ownership, community files, README polish
 
 ## Phase Details
 
@@ -106,10 +108,34 @@ Plans:
 - [x] 05-04-PLAN.md -- Toolbar tooltips and branded splash screen
 - [x] 05-05-PLAN.md -- npm packaging, README, LICENSE, and distribution files
 
+### Phase 6: Wire Retry Prefill & Tech Debt Cleanup
+**Goal**: Complete the retry-prefill-resubmit UX path and remove accumulated dead code from earlier phases
+**Depends on**: Phase 4
+**Requirements**: None (gap closure phase)
+**Gap Closure**: Closes integration gap `prefill-dead-listener` and flow gap `retry-prefill-flow` from v1.0 audit
+**Success Criteria** (what must be TRUE):
+  1. Sidebar retry action sends `overlay:prefill-instruction` IPC to populate the overlay textarea with the previous instruction
+  2. User can edit the prefilled instruction before re-submitting
+  3. Dead code removed: `buildElectron` export, `CLAW_CWD` env var, stub `preload/index.ts`, placeholder `renderer/index.html`
+**Plans**: 0 plans
+
+### Phase 7: Open Source Readiness
+**Goal**: Prepare claw-design for public release under prodoxx GitHub with proper branding, ownership, and community files
+**Depends on**: Phase 5
+**Requirements**: None (open source readiness phase)
+**Success Criteria** (what must be TRUE):
+  1. All user-facing CLI strings say "Claw Design" instead of "Electron" (spinner text, success messages)
+  2. `package.json` repository URL, homepage, and author point to `prodoxx/claw-design`
+  3. `LICENSE` copyright holder updated to `prodoxx`
+  4. `CONTRIBUTING.md` exists with contribution guidelines
+  5. `CODE_OF_CONDUCT.md` exists
+  6. `README.md` polished for public launch audience
+**Plans**: 0 plans
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -118,3 +144,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 3. Selection Overlay & Capture | 0/3 | Not started | - |
 | 4. Claude Code Integration | 0/3 | Not started | - |
 | 5. Polish & Distribution | 0/5 | Not started | - |
+| 6. Wire Retry Prefill & Tech Debt Cleanup | 0/0 | Not started | - |
+| 7. Open Source Readiness | 0/0 | Not started | - |
