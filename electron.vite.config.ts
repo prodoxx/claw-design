@@ -13,7 +13,6 @@ export default defineConfig({
     build: {
       rollupOptions: {
         input: {
-          index: resolve(__dirname, 'src/preload/index.ts'),
           overlay: resolve(__dirname, 'src/preload/overlay.ts'),
           sidebar: resolve(__dirname, 'src/preload/sidebar.ts'),
         },
