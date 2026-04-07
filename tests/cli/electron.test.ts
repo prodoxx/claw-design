@@ -17,37 +17,10 @@ vi.mock('node:module', () => ({
   }),
 }));
 
-import { execFileSync, spawn } from 'node:child_process';
-import { buildElectron, spawnElectron } from '../../src/cli/utils/electron.js';
+import { spawn } from 'node:child_process';
+import { spawnElectron } from '../../src/cli/utils/electron.js';
 
-const mockExecFileSync = vi.mocked(execFileSync);
 const mockSpawn = vi.mocked(spawn);
-
-describe('buildElectron', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('calls execFileSync with npx and electron-vite build args', () => {
-    buildElectron();
-    expect(mockExecFileSync).toHaveBeenCalledWith(
-      'npx',
-      ['electron-vite', 'build'],
-      expect.any(Object),
-    );
-  });
-
-  it('uses cwd option pointing to the project root', () => {
-    buildElectron();
-    const callArgs = mockExecFileSync.mock.calls[0];
-    const options = callArgs[2] as { cwd: string };
-    // The cwd should be an absolute path (the project root)
-    expect(options.cwd).toBeDefined();
-    expect(typeof options.cwd).toBe('string');
-    // The project root should NOT end with src/cli/utils
-    expect(options.cwd).not.toContain('src/cli/utils');
-  });
-});
 
 describe('spawnElectron', () => {
   const mockChildProcess = {
@@ -91,10 +64,10 @@ describe('spawnElectron', () => {
     expect(options.env.CLAW_PROJECT_NAME).toBe('my-app');
   });
 
-  it('sets CLAW_CWD env var to process.cwd()', () => {
+  it('sets CLAW_PROJECT_DIR env var to process.cwd()', () => {
     spawnElectron('http://localhost:3000', 'my-app');
     const options = mockSpawn.mock.calls[0][2] as { env: Record<string, string> };
-    expect(options.env.CLAW_CWD).toBe(process.cwd());
+    expect(options.env.CLAW_PROJECT_DIR).toBe(process.cwd());
   });
 
   it('returns the spawned ChildProcess', () => {
