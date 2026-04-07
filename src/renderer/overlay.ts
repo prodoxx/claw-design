@@ -681,8 +681,9 @@ if (isInBrowser()) {
     });
   }
 
-  // Wire prefill for retry (D-19): when retry is clicked in sidebar,
-  // the overlay receives the original instruction to pre-populate the textarea.
+  // Wire prefill for retry: when retry is clicked in sidebar, the overlay receives the
+  // original instruction to pre-populate the textarea AND activates selection mode so
+  // the user can make a new selection and edit the instruction before re-submitting.
   if (window.claw?.onPrefillInstruction) {
     window.claw.onPrefillInstruction((data: { instruction: string }) => {
       const ta = document.getElementById('claw-input-textarea') as HTMLTextAreaElement;
@@ -690,6 +691,28 @@ if (isInBrowser()) {
         ta.value = data.instruction;
         // Trigger auto-expand and enable submit button
         ta.dispatchEvent(new Event('input'));
+      }
+
+      // Activate overlay surface for interaction (body class + toolbar pinning)
+      activateOverlaySurface();
+
+      // Enter rect-idle selection mode so user can draw a new selection
+      dispatch({ type: 'ACTIVATE_RECT' });
+
+      // Show input bar at default position (no selection yet -- center at 60% height)
+      const inputBar = document.getElementById('claw-input-bar')!;
+      inputBar.hidden = false;
+      inputBar.style.left = '50%';
+      inputBar.style.transform = 'translateX(-50%)';
+      inputBar.style.top = `${Math.round(window.innerHeight * 0.6)}px`;
+      inputBar.style.bottom = '';
+      requestAnimationFrame(() => {
+        inputBar.classList.add('claw-input-bar--visible');
+      });
+
+      // Focus textarea so user can immediately edit (accessibility: keyboard focus)
+      if (ta) {
+        ta.focus();
       }
     });
   }
