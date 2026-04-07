@@ -6,7 +6,7 @@ vi.mock('node:child_process', () => ({
 }));
 
 import { execFileSync } from 'node:child_process';
-import { isClaudeInstalled } from '../../src/cli/utils/claude.js';
+import { isClaudeInstalled, getClaudeAuthStatus } from '../../src/cli/utils/claude.js';
 
 const mockExecFileSync = vi.mocked(execFileSync);
 
@@ -31,6 +31,66 @@ describe('isClaudeInstalled', () => {
     mockExecFileSync.mockReturnValue('');
     isClaudeInstalled();
     expect(mockExecFileSync).toHaveBeenCalledWith('which', ['claude'], { stdio: 'ignore' });
+  });
+});
+
+describe('getClaudeAuthStatus', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns loggedIn: true when claude auth status reports loggedIn', () => {
+    mockExecFileSync.mockReturnValue(JSON.stringify({
+      loggedIn: true,
+      authMethod: 'claude.ai',
+      apiProvider: 'firstParty',
+      apiKeySource: 'oauth',
+      email: 'user@example.com',
+    }));
+
+    const status = getClaudeAuthStatus();
+    expect(status.loggedIn).toBe(true);
+    expect(status.authMethod).toBe('claude.ai');
+    expect(status.email).toBe('user@example.com');
+  });
+
+  it('returns loggedIn: false when claude auth status reports not logged in', () => {
+    mockExecFileSync.mockReturnValue(JSON.stringify({
+      loggedIn: false,
+    }));
+
+    const status = getClaudeAuthStatus();
+    expect(status.loggedIn).toBe(false);
+  });
+
+  it('returns loggedIn: false when the command throws', () => {
+    mockExecFileSync.mockImplementation(() => {
+      throw new Error('ENOENT');
+    });
+
+    const status = getClaudeAuthStatus();
+    expect(status.loggedIn).toBe(false);
+  });
+
+  it('returns loggedIn: false when output is not valid JSON', () => {
+    mockExecFileSync.mockReturnValue('not json');
+
+    const status = getClaudeAuthStatus();
+    expect(status.loggedIn).toBe(false);
+  });
+
+  it('calls claude auth status --json with correct options', () => {
+    mockExecFileSync.mockReturnValue(JSON.stringify({ loggedIn: true }));
+    getClaudeAuthStatus();
+
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'claude',
+      ['auth', 'status', '--json'],
+      expect.objectContaining({
+        encoding: 'utf-8',
+        timeout: 10_000,
+      }),
+    );
   });
 });
 
