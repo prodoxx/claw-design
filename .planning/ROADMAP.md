@@ -134,7 +134,11 @@ Plans:
   4. `CONTRIBUTING.md` exists with contribution guidelines
   5. `CODE_OF_CONDUCT.md` exists
   6. `README.md` polished for public launch audience
-**Plans**: 0 plans
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md -- Rebrand CLI/window strings and update package ownership
+- [ ] 07-02-PLAN.md -- Launch-ready README and community files (CONTRIBUTING, CODE_OF_CONDUCT, templates)
 
 ## Progress
 
@@ -149,4 +153,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 4. Claude Code Integration | 0/3 | Not started | - |
 | 5. Polish & Distribution | 0/5 | Not started | - |
 | 6. Wire Retry Prefill & Tech Debt Cleanup | 0/2 | Not started | - |
-| 7. Open Source Readiness | 0/0 | Not started | - |
+| 7. Open Source Readiness | 0/2 | Not started | - |
