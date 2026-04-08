@@ -26,8 +26,13 @@ try {
 } catch { /* use default */ }
 
 app.whenReady().then(() => {
-  // Set about panel options after app is ready so NativeImage loads correctly
-  const aboutIcon = nativeImage.createFromPath(iconPath);
+  // Load icon from buffer (more reliable than createFromPath in bundled Electron)
+  let aboutIcon = nativeImage.createEmpty();
+  try {
+    const iconBuffer = fs.readFileSync(iconPath);
+    aboutIcon = nativeImage.createFromBuffer(iconBuffer);
+  } catch { /* icon will be default Electron icon */ }
+
   app.setAboutPanelOptions({
     applicationName: 'Claw Design',
     applicationVersion: appVersion,
@@ -37,12 +42,9 @@ app.whenReady().then(() => {
     ...((process.platform === 'linux' || process.platform === 'win32') ? { iconPath } : {}),
   });
 
-  // Set macOS dock icon (replaces default Electron atom icon)
-  if (process.platform === 'darwin' && app.dock) {
-    const dockIcon = nativeImage.createFromPath(iconPath);
-    if (!dockIcon.isEmpty()) {
-      app.dock.setIcon(dockIcon);
-    }
+  // Set macOS dock icon (reuse the loaded icon)
+  if (process.platform === 'darwin' && app.dock && !aboutIcon.isEmpty()) {
+    app.dock.setIcon(aboutIcon);
   }
 
   // Set branded application menu (replaces default "Electron" menu)
