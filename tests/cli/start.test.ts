@@ -239,14 +239,14 @@ describe('startCommand', () => {
     expect(mockIsClaudeInstalled).not.toHaveBeenCalled();
   });
 
-  it('exits when Electron binary missing', async () => {
+  it('exits when browser component missing', async () => {
     mockCheckElectronBinary.mockReturnValue(false);
 
     await expect(startCommand({})).rejects.toThrow('process.exit called');
 
     expect(mockPrintError).toHaveBeenCalledWith(
-      'Electron not found',
-      'The Electron binary is missing from the installation.',
+      'Browser component not found',
+      'A required browser component is missing from the installation.',
       'Reinstall: npm install -g claw-design'
     );
     expect(mockExit).toHaveBeenCalledWith(1);

@@ -137,7 +137,7 @@ export function createMainWindow(
     width: 1280,
     height: 800,
     center: true,
-    title: `claw-design \u2014 ${projectName} \u2014 localhost:${port}`,
+    title: `Claw Design \u2014 ${projectName} \u2014 localhost:${port}`,
   });
 
   // D-06: Dark surround background for viewport constraining
@@ -207,7 +207,7 @@ export function createMainWindow(
 </head>
 <body>
   <div class="splash">
-    <div class="splash__brand">claw-design</div>
+    <div class="splash__brand">Claw Design</div>
     <div class="splash__spinner" aria-label="Loading application"></div>
     <div class="splash__url">Loading localhost:${port}...</div>
   </div>

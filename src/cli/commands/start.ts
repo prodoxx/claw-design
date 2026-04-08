@@ -33,8 +33,8 @@ export async function startCommand(options: StartOptions): Promise<void> {
 
   if (!checkElectronBinary()) {
     printError(
-      'Electron not found',
-      'The Electron binary is missing from the installation.',
+      'Browser component not found',
+      'A required browser component is missing from the installation.',
       'Reinstall: npm install -g claw-design'
     );
     process.exit(1);
@@ -90,7 +90,7 @@ export async function startCommand(options: StartOptions): Promise<void> {
     }
   }
 
-  // Read project name from package.json for Electron window title (D-03)
+  // Read project name from package.json for Claw Design window title (D-03)
   let projectName = 'unknown';
   try {
     const pkg = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8'));
@@ -202,9 +202,9 @@ export async function startCommand(options: StartOptions): Promise<void> {
   // Pre-built by `npm run build` / prepublishOnly hook (D-18).
   // No runtime build needed -- out/ is included in the npm package.
   // Claude Code session is managed by AgentManager inside the Electron main process.
-  const electronSpinner = createSpinner('Opening Electron window...');
+  const electronSpinner = createSpinner('Starting Claw Design...');
   const electronProcess = spawnElectron(`http://localhost:${port}`, projectName);
-  electronSpinner.succeed(`Electron window opened ${pc.dim(`localhost:${port}`)}`);
+  electronSpinner.succeed(`Claw Design ready ${pc.dim(`localhost:${port}`)}`);
 
 
   // Step 7: Register shutdown and print ready (per D-01 final step)
@@ -222,7 +222,7 @@ export async function startCommand(options: StartOptions): Promise<void> {
 
   // Electron window closed -- trigger shutdown to kill dev server + Claude
   electronProcess.on('exit', () => {
-    console.log(pc.dim('\n  Electron window closed.'));
+    console.log(pc.dim('\n  Claw Design window closed.'));
     process.emit('SIGINT');
   });
 
