@@ -9,8 +9,10 @@ export interface SelectionBounds {
 }
 
 const overlayAPI = {
-  /** Request activation of selection mode (expand overlay to full window) */
-  activateSelection: (): Promise<void> =>
+  /** Request activation of selection mode (expand overlay to full window).
+   *  Returns the overlay view's pre-expansion bounds so the renderer can
+   *  translate view-local toolbar coordinates into full-window coordinates. */
+  activateSelection: (): Promise<{ x: number; y: number; width: number; height: number }> =>
     ipcRenderer.invoke('overlay:activate-selection'),
 
   /** Request deactivation of selection mode (shrink overlay to toolbar area) */

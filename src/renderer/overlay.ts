@@ -331,13 +331,34 @@ if (isInBrowser()) {
   // Activate/deactivate overlay hit surface
   const toolbar = document.getElementById('claw-toolbar');
 
-  function activateOverlaySurface(): void {
-    // Pin toolbar at its current screen position before overlay expands
-    if (toolbar) {
-      const rect = toolbar.getBoundingClientRect();
+  /**
+   * Capture the toolbar's current view-local bounding rect.
+   * Must be called BEFORE the overlay view expands (IPC), because after
+   * expansion the toolbar's CSS position (bottom:12, right:8) is relative
+   * to the full window, not the small toolbar view.
+   */
+  function captureToolbarLocalRect(): DOMRect | null {
+    return toolbar ? toolbar.getBoundingClientRect() : null;
+  }
+
+  /**
+   * Activate the overlay hit surface and pin the toolbar at its correct
+   * full-window position.
+   *
+   * @param localRect - toolbar's getBoundingClientRect() captured BEFORE view expansion
+   * @param viewBounds - overlay view's pre-expansion bounds from main process
+   *
+   * The toolbar's localRect is in the small-view coordinate system. The view's
+   * origin (viewBounds.x, viewBounds.y) translates these to full-window coords.
+   */
+  function activateOverlaySurface(
+    localRect: DOMRect | null,
+    viewBounds?: { x: number; y: number; width: number; height: number },
+  ): void {
+    if (toolbar && localRect && viewBounds) {
       toolbar.style.position = 'fixed';
-      toolbar.style.left = `${rect.left}px`;
-      toolbar.style.top = `${rect.top}px`;
+      toolbar.style.left = `${viewBounds.x + localRect.left}px`;
+      toolbar.style.top = `${viewBounds.y + localRect.top}px`;
       toolbar.style.bottom = 'auto';
       toolbar.style.right = 'auto';
     }
@@ -362,8 +383,9 @@ if (isInBrowser()) {
       e.stopPropagation();
       if (state.mode === 'inactive' || state.mode === 'elem-idle' || state.mode === 'elem-hovering' || state.mode === 'elem-committed') {
         hideInputBar();
-        await window.claw?.activateSelection();
-        activateOverlaySurface();
+        const localRect = captureToolbarLocalRect();
+        const viewBounds = await window.claw?.activateSelection();
+        activateOverlaySurface(localRect, viewBounds);
         dispatch({ type: 'ACTIVATE_RECT' });
       } else if (
         state.mode === 'rect-idle' ||
@@ -372,8 +394,8 @@ if (isInBrowser()) {
       ) {
         hideInputBar();
         dispatch({ type: 'CANCEL' });
+        await window.claw?.deactivateSelection();
         deactivateOverlaySurface();
-        window.claw?.deactivateSelection();
       }
     });
   }
@@ -385,8 +407,9 @@ if (isInBrowser()) {
       e.stopPropagation();
       if (state.mode === 'inactive' || state.mode === 'rect-idle' || state.mode === 'rect-drawing' || state.mode === 'rect-committed') {
         hideInputBar();
-        await window.claw?.activateSelection();
-        activateOverlaySurface();
+        const localRect = captureToolbarLocalRect();
+        const viewBounds = await window.claw?.activateSelection();
+        activateOverlaySurface(localRect, viewBounds);
         dispatch({ type: 'ACTIVATE_ELEM' });
       } else if (
         state.mode === 'elem-idle' ||
@@ -395,8 +418,8 @@ if (isInBrowser()) {
       ) {
         hideInputBar();
         dispatch({ type: 'CANCEL' });
+        await window.claw?.deactivateSelection();
         deactivateOverlaySurface();
-        window.claw?.deactivateSelection();
       }
     });
   }
@@ -447,12 +470,12 @@ if (isInBrowser()) {
   });
 
   // Escape key cancels selection and hides input bar
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', async (e) => {
     if (e.key === 'Escape' && state.mode !== 'inactive') {
       hideInputBar();
       dispatch({ type: 'CANCEL' });
+      await window.claw?.deactivateSelection();
       deactivateOverlaySurface();
-      window.claw?.deactivateSelection();
     }
   });
 
@@ -648,8 +671,9 @@ if (isInBrowser()) {
     // Dispatch CANCEL to clear selection state
     dispatch({ type: 'CANCEL' });
     // Deactivate overlay (shrink bounds) per D-12
-    deactivateOverlaySurface();
+    // Shrink overlay view FIRST so toolbar CSS reset lands in correctly-positioned small view
     await window.claw.deactivateSelection();
+    deactivateOverlaySurface();
   }
 
   submitBtn.addEventListener('click', handleSubmit);
@@ -685,7 +709,7 @@ if (isInBrowser()) {
   // original instruction to pre-populate the textarea AND activates selection mode so
   // the user can make a new selection and edit the instruction before re-submitting.
   if (window.claw?.onPrefillInstruction) {
-    window.claw.onPrefillInstruction((data: { instruction: string }) => {
+    window.claw.onPrefillInstruction(async (data: { instruction: string }) => {
       const ta = document.getElementById('claw-input-textarea') as HTMLTextAreaElement;
       if (ta) {
         ta.value = data.instruction;
@@ -693,8 +717,10 @@ if (isInBrowser()) {
         ta.dispatchEvent(new Event('input'));
       }
 
-      // Activate overlay surface for interaction (body class + toolbar pinning)
-      activateOverlaySurface();
+      // Capture toolbar position BEFORE expansion, then expand and pin
+      const localRect = captureToolbarLocalRect();
+      const viewBounds = await window.claw?.activateSelection();
+      activateOverlaySurface(localRect, viewBounds);
 
       // Enter rect-idle selection mode so user can draw a new selection
       dispatch({ type: 'ACTIVATE_RECT' });

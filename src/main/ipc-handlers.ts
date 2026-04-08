@@ -25,15 +25,21 @@ export function registerIpcHandlers(
 ): void {
   // Activate selection mode: expand overlay to full window, notify renderer
   // D-08: auto-minimize sidebar when entering selection mode
+  // Returns the overlay view's pre-expansion bounds so the renderer can compute
+  // correct full-window coordinates for toolbar position pinning.
   ipcMain.handle('overlay:activate-selection', async () => {
     if (components.getSidebarState() === 'expanded') {
       components.setSidebarState('minimized');
     }
+    // Capture bounds BEFORE expansion -- renderer needs these to translate
+    // view-local toolbar coordinates into full-window coordinates.
+    const preExpansionBounds = components.overlayView.getBounds();
     setOverlayActive(components.overlayView, components.window, components);
     components.overlayView.webContents.send(
       'overlay:mode-change',
       'selection',
     );
+    return preExpansionBounds;
   });
 
   // Deactivate selection mode: shrink overlay to indicator, notify renderer
@@ -177,16 +183,13 @@ export function registerIpcHandlers(
       components.setSidebarState('hidden');
     }
 
-    // Prefill the overlay textarea with the original instruction
+    // Prefill the overlay textarea with the original instruction.
+    // The renderer's onPrefillInstruction handler will pin the toolbar position,
+    // then call activateSelection() to expand the overlay -- this ordering prevents
+    // the toolbar from snapping to its CSS default position.
     components.overlayView.webContents.send('overlay:prefill-instruction', {
       instruction,
     });
-
-    // Activate overlay for new selection (expands bounds to full window, minimizes sidebar)
-    setOverlayActive(components.overlayView, components.window, components);
-
-    // Enter rect-idle selection mode (default, more general than elem-idle)
-    components.overlayView.webContents.send('overlay:mode-change', 'selection');
   });
 
   // Sidebar task undo -- submit a new task asking Claude to revert the change
