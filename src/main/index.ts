@@ -25,18 +25,18 @@ try {
   appVersion = pkg.version ?? appVersion;
 } catch { /* use default */ }
 
-// macOS: use NativeImage for about panel icon; iconPath is Linux/Windows only
-const aboutIcon = nativeImage.createFromPath(iconPath);
-app.setAboutPanelOptions({
-  applicationName: 'Claw Design',
-  applicationVersion: appVersion,
-  version: '',
-  copyright: 'MIT License',
-  ...(process.platform === 'darwin' && !aboutIcon.isEmpty() ? { icon: aboutIcon } : {}),
-  ...((process.platform === 'linux' || process.platform === 'win32') ? { iconPath } : {}),
-});
-
 app.whenReady().then(() => {
+  // Set about panel options after app is ready so NativeImage loads correctly
+  const aboutIcon = nativeImage.createFromPath(iconPath);
+  app.setAboutPanelOptions({
+    applicationName: 'Claw Design',
+    applicationVersion: appVersion,
+    version: '',
+    copyright: 'MIT License',
+    ...(process.platform === 'darwin' && !aboutIcon.isEmpty() ? { icon: aboutIcon } : {}),
+    ...((process.platform === 'linux' || process.platform === 'win32') ? { iconPath } : {}),
+  });
+
   // Set macOS dock icon (replaces default Electron atom icon)
   if (process.platform === 'darwin' && app.dock) {
     const dockIcon = nativeImage.createFromPath(iconPath);

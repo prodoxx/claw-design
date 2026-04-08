@@ -238,10 +238,7 @@ export function createMainWindow(
     path.join(__dirname, '../renderer/overlay.html'),
   );
 
-  // Open DevTools for overlay in development
-  if (!app.isPackaged) {
-    overlayView.webContents.openDevTools({ mode: 'detach' });
-  }
+
 
   // Sidebar view (topmost layer) -- separate WebContentsView for persistence across overlay bounds toggle
   const sidebarView = new WebContentsView({
