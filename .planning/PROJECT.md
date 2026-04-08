@@ -26,12 +26,15 @@ Developers can visually select any part of their running website and describe ch
 - [x] Capture DOM elements within selected region (structure, classes, IDs, text content) — Validated in Phase 3
 - [x] Input box appears after selection for the user to describe desired changes — Validated in Phase 3
 
-### Active
-- [ ] Send screenshot + DOM context + user instruction to Claude Code session
-- [ ] Claude Code edits source files based on the visual context and instruction
-- [ ] Dev server HMR reflects changes without manual refresh
-- [ ] Framework agnostic — works with any web framework/stack
+- [x] Send screenshot + DOM context + user instruction to Claude Code session — Validated in Phase 4
+- [x] Claude Code edits source files based on the visual context and instruction — Validated in Phase 4
+- [x] Dev server HMR reflects changes without manual refresh — Validated in Phase 4
+- [x] Framework agnostic — works with any web framework/stack — Validated in Phase 1
 - [x] Open source (public repository, OSS license) — Validated in Phase 7
+
+### Active
+
+(No active requirements — v1.0 shipped. See v2 requirements in archived REQUIREMENTS.md.)
 
 ### Out of Scope
 
@@ -43,11 +46,12 @@ Developers can visually select any part of their running website and describe ch
 
 ## Context
 
-- The tool bridges the gap between "seeing" a problem in the browser and "fixing" it in code. Today developers mentally map DOM elements to source files — Claw eliminates that translation step.
-- Claude Code already handles codebase navigation, file editing, and multi-file changes. Claw adds a visual selection layer on top.
-- Framework agnosticism is achievable because Claude Code already works with any codebase. The challenge is in DOM-to-source mapping, which Claude handles by searching the codebase using class names, text content, and component structure from the captured DOM.
-- Electron is chosen over a Chrome extension because the CLI-first workflow (`claw start`) controls the entire experience — one command, no separate extension installation.
-- The dev server's own HMR/live reload handles reflecting changes, so Claw doesn't need to implement its own reload mechanism.
+- **v1.0 shipped 2026-04-08.** 4,581 LOC TypeScript, 234 tests, 7 phases, 21 plans.
+- The tool bridges the gap between "seeing" a problem in the browser and "fixing" it in code. Developers mentally map DOM elements to source files — Claw eliminates that translation step.
+- Claude Code handles codebase navigation, file editing, and multi-file changes via Agent SDK. Claw adds a visual selection layer on top.
+- Framework agnosticism works because Claude Code handles any codebase. DOM capture is framework-independent.
+- Electron chosen over Chrome extension for CLI-first workflow (`clawdesign start`) — one command controls everything.
+- Dev server's own HMR handles reflecting changes — no custom reload mechanism needed.
 
 ## Constraints
 
@@ -67,9 +71,12 @@ Developers can visually select any part of their running website and describe ch
 | Screenshot + DOM for context | Gives Claude both visual and structural understanding of what the user is pointing at | Validated Phase 3 |
 | Preload scripts must build as CJS | Electron preload rejects ESM import statements; electron-vite config needs format: 'cjs' | Validated Phase 3 |
 | Near-invisible overlay background for hit-testing | Chromium skips hit-testing on fully transparent views; rgba(0,0,0,0.01) provides surface | Validated Phase 3 |
-| Spawn Claude Code CLI (not API) | Leverages Claude Code's existing codebase navigation, tool use, and multi-file editing | — Pending |
-| Framework agnostic from v1 | Claude Code already handles any codebase; DOM capture is framework-independent | — Pending |
-| No undo for v1 | Git provides undo capability; building custom undo adds complexity without core value | — Pending |
+| Spawn Claude Code CLI (not API) | Leverages Claude Code's existing codebase navigation, tool use, and multi-file editing | Validated Phase 4 |
+| Framework agnostic from v1 | Claude Code already handles any codebase; DOM capture is framework-independent | Validated Phase 1 |
+| No undo for v1 | Git provides undo capability; building custom undo adds complexity without core value | Validated v1.0 |
+| Agent SDK for Claude integration | Structured message passing, streaming, multi-turn support vs raw child_process | Validated Phase 4 |
+| Vertical pill toolbar with drag handle | Compact, movable UI that doesn't obstruct site content | Validated Phase 2 |
+| Branded postinstall for macOS | Patches Electron.app Info.plist and icon for "Claw Design" branding in dev mode | Validated Phase 7 |
 
 ## Evolution
 
@@ -89,4 +96,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-08 after Phase 7 completion — all v1.0 milestone phases complete*
+*Last updated: 2026-04-08 after v1.0 milestone*
