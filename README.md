@@ -6,8 +6,7 @@ Point at your running website. Describe what to change. Watch Claude edit the co
 [![license](https://img.shields.io/npm/l/claw-design)](./LICENSE)
 [![node](https://img.shields.io/node/v/claw-design)](https://nodejs.org)
 
-<!-- TODO: Add demo GIF -->
-<!-- ![Claw Design demo](./docs/demo.gif) -->
+![Claw Design demo](./docs/demo.gif)
 
 ## Why Claw Design?
 
