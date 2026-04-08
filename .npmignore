@@ -1,0 +1,8 @@
+.github/
+.claude/
+.planning/
+docs/
+CLAUDE.md
+tests/
+*.test.js
+.gitignore
