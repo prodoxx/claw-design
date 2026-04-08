@@ -105,11 +105,11 @@ describe('createMainWindow', () => {
     );
   });
 
-  it('sets window title containing claw-design, project name, and port', () => {
+  it('sets window title containing Claw Design, project name, and port', () => {
     createMainWindow('http://localhost:3000', 'my-app', 3000);
     expect(BaseWindow).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: expect.stringContaining('claw-design'),
+        title: expect.stringContaining('Claw Design'),
       }),
     );
     const callArgs = vi.mocked(BaseWindow).mock.calls[0][0] as { title: string };
@@ -163,7 +163,7 @@ describe('createMainWindow', () => {
     // Splash HTML should contain brand text and port
     const loadedUrl = siteView.webContents.loadURL.mock.calls[0][0] as string;
     const decoded = decodeURIComponent(loadedUrl);
-    expect(decoded).toContain('claw-design');
+    expect(decoded).toContain('Claw Design');
     expect(decoded).toContain('localhost:3000');
     expect(decoded).toContain('splash__spinner');
   });
