@@ -137,8 +137,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md -- Rebrand CLI/window strings and update package ownership
-- [ ] 07-02-PLAN.md -- Launch-ready README and community files (CONTRIBUTING, CODE_OF_CONDUCT, templates)
+- [x] 07-01-PLAN.md -- Rebrand CLI/window strings and update package ownership
+- [x] 07-02-PLAN.md -- Launch-ready README and community files (CONTRIBUTING, CODE_OF_CONDUCT, templates)
 
 ## Progress
 
