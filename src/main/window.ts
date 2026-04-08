@@ -397,7 +397,8 @@ export function setOverlayInactive(
 
   const userPos = components?.getToolbarPosition?.();
   if (userPos) {
-    const x = Math.max(0, Math.min(width - viewW, userPos.x - tooltipAllowance));
+    // userPos stores the view's top-left corner from drag handler — use directly
+    const x = Math.max(0, Math.min(width - viewW, userPos.x));
     const y = Math.max(0, Math.min(height - viewH, userPos.y));
     overlayView.setBounds({ x, y, width: viewW, height: viewH });
   } else {
