@@ -1,7 +1,7 @@
 {
   "name": "claw-design",
   "version": "0.1.0",
-  "description": "Visual web development tool powered by Claude Code",
+  "description": "Point at your running website, describe changes in plain English, and watch Claude Code edit the source live",
   "type": "module",
   "main": "./dist/main/index.js",
   "bin": {
@@ -23,7 +23,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/nebula-core-org/claw-design"
+    "url": "https://github.com/prodoxx/claw-design"
   },
   "keywords": [
     "visual-development",
@@ -34,8 +34,11 @@
     "ai-coding",
     "design-to-code"
   ],
-  "homepage": "https://github.com/nebula-core-org/claw-design",
-  "author": "nebula-core-org",
+  "homepage": "https://github.com/prodoxx/claw-design",
+  "author": {
+    "name": "prodoxx",
+    "url": "https://github.com/prodoxx"
+  },
   "engines": {
     "node": ">=20.0.0"
   },
