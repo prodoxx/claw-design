@@ -1,6 +1,7 @@
 {
   "name": "claw-design",
-  "version": "0.1.0",
+  "productName": "Claw Design",
+  "version": "1.0.0",
   "description": "Point at your running website, describe changes in plain English, and watch Claude Code edit the source live",
   "type": "module",
   "main": "./dist/main/index.js",
@@ -14,11 +15,14 @@
     "dev": "electron-vite dev",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "postinstall": "node scripts/postinstall.cjs"
   },
   "files": [
     "dist/",
     "out/",
+    "resources/",
+    "scripts/",
     "LICENSE"
   ],
   "repository": {

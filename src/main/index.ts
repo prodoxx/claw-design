@@ -1,14 +1,52 @@
-import { app } from 'electron';
+import { app, nativeImage } from 'electron';
+import path from 'node:path';
+import fs from 'node:fs';
 import { createMainWindow, setOverlayInactive } from './window.js';
 import { setupNavigation } from './navigation.js';
 import { registerIpcHandlers } from './ipc-handlers.js';
 import { AgentManager } from './agent-manager.js';
+import { setupApplicationMenu } from './menu.js';
 
 const url = process.env.CLAW_URL ?? 'http://localhost:3000';
 const projectName = process.env.CLAW_PROJECT_NAME ?? 'unknown';
 const port = parseInt(url.match(/:(\d+)/)?.[1] ?? '3000', 10);
 
+// --- Branding: set app name and metadata before window creation ---
+app.setName('Claw Design');
+
+// Resolve icon path (works for both dev and packaged builds)
+const iconPath = path.join(__dirname, '../../resources/icon.png');
+
+// Read app version from project package.json (app.getVersion() returns Electron's version in dev mode)
+let appVersion = '1.0.0';
+try {
+  const pkgPath = path.join(__dirname, '../../package.json');
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+  appVersion = pkg.version ?? appVersion;
+} catch { /* use default */ }
+
+// macOS: use NativeImage for about panel icon; iconPath is Linux/Windows only
+const aboutIcon = nativeImage.createFromPath(iconPath);
+app.setAboutPanelOptions({
+  applicationName: 'Claw Design',
+  applicationVersion: appVersion,
+  version: '',
+  copyright: 'MIT License',
+  ...(process.platform === 'darwin' && !aboutIcon.isEmpty() ? { icon: aboutIcon } : {}),
+  ...((process.platform === 'linux' || process.platform === 'win32') ? { iconPath } : {}),
+});
+
 app.whenReady().then(() => {
+  // Set macOS dock icon (replaces default Electron atom icon)
+  if (process.platform === 'darwin' && app.dock) {
+    const dockIcon = nativeImage.createFromPath(iconPath);
+    if (!dockIcon.isEmpty()) {
+      app.dock.setIcon(dockIcon);
+    }
+  }
+
+  // Set branded application menu (replaces default "Electron" menu)
+  setupApplicationMenu();
   const components = createMainWindow(url, projectName, port);
 
   // Navigate from splash to actual site URL (D-21)
