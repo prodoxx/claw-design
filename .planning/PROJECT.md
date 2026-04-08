@@ -31,7 +31,7 @@ Developers can visually select any part of their running website and describe ch
 - [ ] Claude Code edits source files based on the visual context and instruction
 - [ ] Dev server HMR reflects changes without manual refresh
 - [ ] Framework agnostic — works with any web framework/stack
-- [ ] Open source (public repository, OSS license)
+- [x] Open source (public repository, OSS license) — Validated in Phase 7
 
 ### Out of Scope
 
@@ -89,4 +89,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 after Phase 3 completion*
+*Last updated: 2026-04-08 after Phase 7 completion — all v1.0 milestone phases complete*
