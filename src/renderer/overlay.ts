@@ -640,16 +640,17 @@ if (isInBrowser()) {
     ]);
 
     // Only include pasted images whose [Image #N] tag is still in the text
-    const referenceImages: Buffer[] = [];
+    // Use Uint8Array (not Buffer) — Buffer is not available in sandboxed renderer
+    const referenceImages: Uint8Array[] = [];
     for (let i = 0; i < pastedImages.length; i++) {
       if (instruction.includes(`[Image #${i + 1}]`)) {
-        referenceImages.push(Buffer.from(new Uint8Array(pastedImages[i].buffer)));
+        referenceImages.push(new Uint8Array(pastedImages[i].buffer));
       }
     }
     // If images were pasted but none are referenced, include all (no-tag usage)
     if (pastedImages.length > 0 && referenceImages.length === 0 && !/\[Image #\d+\]/.test(instruction)) {
       for (const img of pastedImages) {
-        referenceImages.push(Buffer.from(new Uint8Array(img.buffer)));
+        referenceImages.push(new Uint8Array(img.buffer));
       }
     }
 

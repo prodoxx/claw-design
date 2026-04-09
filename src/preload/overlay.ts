@@ -69,7 +69,7 @@ const overlayAPI = {
       viewport: { width: number; height: number };
     };
     bounds: { x: number; y: number; width: number; height: number };
-    referenceImages?: Buffer[];
+    referenceImages?: Uint8Array[];
     model?: string;
   }): Promise<void> =>
     ipcRenderer.invoke('overlay:submit-instruction', data),
