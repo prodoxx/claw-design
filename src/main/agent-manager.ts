@@ -326,7 +326,7 @@ export class AgentManager {
           append:
             'You are used by claw-design. The user selected a region of their website and provided a screenshot, DOM context, and change instruction. Edit the source code to implement the change. Be concise in your response.',
         },
-        allowedTools: ['Read', 'Write', 'Edit', 'Glob', 'Grep', 'Bash'],
+        allowedTools: ['Read', 'Write', 'Edit', 'Glob', 'Grep'],
         permissionMode: 'acceptEdits',
         settingSources: ['user', 'project'],
         persistSession: false,

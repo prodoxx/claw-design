@@ -19,7 +19,7 @@ export function assemblePrompt(
   screenshotBuffer: Buffer,
   domContext: DomExtractionResult,
   bounds?: CSSRect,
-  referenceImages?: Buffer[],
+  referenceImages?: Buffer[] | Uint8Array[],
 ): AsyncIterable<SDKUserMessage> {
   // Find the largest/most prominent element in the selection (likely the target)
   const primaryElement = domContext.elements.length > 0
@@ -69,7 +69,7 @@ export function assemblePrompt(
             source: {
               type: 'base64',
               media_type: 'image/png',
-              data: referenceImages[idx].toString('base64'),
+              data: Buffer.from(referenceImages[idx]).toString('base64'),
             },
           });
         }
@@ -111,7 +111,7 @@ export function assemblePrompt(
     for (const buf of referenceImages) {
       contentBlocks.push({
         type: 'image',
-        source: { type: 'base64', media_type: 'image/png', data: buf.toString('base64') },
+        source: { type: 'base64', media_type: 'image/png', data: Buffer.from(buf).toString('base64') },
       });
     }
   }
