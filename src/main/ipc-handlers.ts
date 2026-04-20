@@ -50,17 +50,24 @@ export function registerIpcHandlers(
 
   // Get element bounding rect at a point in the site view
   // Per D-04: top-level document only, no shadow DOM or iframe traversal
+  // Coordinates from overlay are in full-window space; offset by site view bounds
+  // so they map correctly in non-desktop viewports where the site view is centered.
   ipcMain.handle(
     'overlay:get-element-at-point',
     async (_event, x: number, y: number) => {
+      const svBounds = components.siteView.getBounds();
+      const sx = x - svBounds.x;
+      const sy = y - svBounds.y;
+      // Point is outside the site view — no element to find
+      if (sx < 0 || sy < 0 || sx > svBounds.width || sy > svBounds.height) return null;
       const result = await components.siteView.webContents.executeJavaScript(`
         (function() {
-          const el = document.elementFromPoint(${x}, ${y});
+          var el = document.elementFromPoint(${sx}, ${sy});
           if (!el) return null;
-          const rect = el.getBoundingClientRect();
+          var rect = el.getBoundingClientRect();
           return {
-            x: Math.round(rect.x),
-            y: Math.round(rect.y),
+            x: Math.round(rect.x + ${svBounds.x}),
+            y: Math.round(rect.y + ${svBounds.y}),
             width: Math.round(rect.width),
             height: Math.round(rect.height)
           };
@@ -71,18 +78,34 @@ export function registerIpcHandlers(
   );
 
   // Capture screenshot of selected region (CAP-01, CAP-03)
+  // Offset overlay coordinates to site view space for non-desktop viewports.
   ipcMain.handle(
     'overlay:capture-screenshot',
     async (_event, cssRect: CSSRect): Promise<Buffer> => {
-      return captureRegion(components.siteView, cssRect);
+      const svBounds = components.siteView.getBounds();
+      const adjusted: CSSRect = {
+        x: cssRect.x - svBounds.x,
+        y: cssRect.y - svBounds.y,
+        width: cssRect.width,
+        height: cssRect.height,
+      };
+      return captureRegion(components.siteView, adjusted);
     },
   );
 
   // Extract DOM elements within selected region (CAP-02)
+  // Offset overlay coordinates to site view space for non-desktop viewports.
   ipcMain.handle(
     'overlay:extract-dom',
     async (_event, cssRect: CSSRect): Promise<DomExtractionResult> => {
-      const script = buildDomExtractionScript(cssRect);
+      const svBounds = components.siteView.getBounds();
+      const adjusted: CSSRect = {
+        x: cssRect.x - svBounds.x,
+        y: cssRect.y - svBounds.y,
+        width: cssRect.width,
+        height: cssRect.height,
+      };
+      const script = buildDomExtractionScript(adjusted);
       const result = await components.siteView.webContents.executeJavaScript(
         script,
       );
