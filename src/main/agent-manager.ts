@@ -204,7 +204,7 @@ export class AgentManager {
 
     this.dismissTask(id);
     return this.submitTask({
-      instruction: `Undo the previous change: "${task.instruction}". Revert the code back to match the screenshot and DOM context shown here (this is what it looked like BEFORE the change was made).`,
+      instruction: `Undo the previous change: "${task.instruction}". Revert the code back to match the screenshot and DOM context shown here (this is what it looked like BEFORE the change was made). Do not use git revert or any git actions to revert — edit the source files directly.`,
       screenshot: task.screenshot,
       dom: task.dom,
       bounds: task.bounds,
